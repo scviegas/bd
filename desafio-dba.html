@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🗄️ Desafio do DBA — Semana #6 | Jala University</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --b900:#08244f;--b800:#0a2f6b;--b700:#0d47a1;--b600:#1565c0;--b400:#2196f3;
+  --cyan:#00b0ff;--ink:#0f2440;--muted:#5b7396;--ok:#22c55e;--bad:#ef4444;--gold:#ffb300;
+  --bg1:#eaf3ff;--card:#fff;--line:#d7e5f8;--r:18px;--shadow:0 10px 30px rgba(13,71,161,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Poppins',system-ui,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);min-height:100vh;
+  background:
+    radial-gradient(900px 500px at 110% -10%,rgba(0,176,255,.18),transparent 60%),
+    radial-gradient(700px 420px at -10% 110%,rgba(21,101,192,.16),transparent 60%),
+    linear-gradient(180deg,var(--bg1),#f7fbff 55%,var(--bg1));
+}
+.deco{position:fixed;border-radius:50%;z-index:0;pointer-events:none}
+.c1{width:420px;height:420px;background:radial-gradient(circle at 30% 30%,#1565c0,#0a2f6b);top:-160px;left:-140px;opacity:.9}
+.c2{width:150px;height:150px;background:#0d47a1;top:220px;left:-60px;opacity:.85}
+.c3{width:360px;height:360px;background:radial-gradient(circle at 60% 60%,#0b3a86,#061f47);bottom:-180px;right:-120px;opacity:.9}
+header{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;flex-wrap:wrap}
+.brand b{color:var(--b700);font-size:1.05rem;display:block}
+.brand span{color:var(--muted);font-size:.75rem}
+.hud{display:flex;gap:8px;align-items:center}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:.85rem;box-shadow:var(--shadow)}
+.chip small{color:var(--muted);font-weight:400}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px;transition:.18s}
+.btn{background:linear-gradient(135deg,var(--b600),var(--b400));color:#fff;font-weight:700;padding:14px 26px;font-size:1rem;box-shadow:0 8px 20px rgba(21,101,192,.35)}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.07)}
+.btn.ghost{background:var(--card);color:var(--b700);border:1.5px solid var(--line);box-shadow:var(--shadow)}
+.btn.small{padding:9px 16px;font-size:.85rem;border-radius:11px}
+main{position:relative;z-index:2;max-width:960px;margin:0 auto;padding:10px 16px 60px}
+.hidden{display:none!important}
+.screen{animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:26px}
+.center{text-align:center}
+h1{font-size:clamp(1.5rem,4vw,2.2rem);color:var(--b800);line-height:1.2}
+h2{font-size:1.25rem;color:var(--b800)}
+.sub{color:var(--muted);font-size:.95rem;margin:8px 0 18px}
+.rules{text-align:left;margin:16px auto 20px;max-width:560px}
+.rules li{margin:7px 0 7px 4px;font-size:.92rem;color:#33507a;list-style:none;padding-left:26px;position:relative}
+.rules li::before{content:"✔";position:absolute;left:0;color:var(--ok);font-weight:800}
+input{font-family:inherit;font-size:1rem;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;outline:none;width:min(320px,90%);text-align:center}
+input:focus{border-color:var(--b400);box-shadow:0 0 0 4px rgba(33,150,243,.15)}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:18px}
+.lvl{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);text-align:left;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+.lvl::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(33,150,243,.15),rgba(0,176,255,.08))}
+.lvl h3{color:var(--b800);font-size:1.02rem;display:flex;gap:8px;align-items:center}
+.lvl .meta{font-size:.8rem;color:var(--muted)}
+.lvl .stars{color:var(--gold);letter-spacing:2px}
+.lvl.locked{opacity:.55;filter:grayscale(.4)}
+.lvl .tipbtn{background:#e8f2ff;color:var(--b700);font-weight:600;padding:7px 12px;border-radius:10px;font-size:.8rem;align-self:flex-start}
+.tipbox{background:#f0f7ff;border:1px dashed var(--b400);border-radius:12px;padding:10px 12px;font-size:.82rem;color:#28527f;margin-top:4px}
+.quizhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.pbar{height:10px;background:#e3edfb;border-radius:99px;overflow:hidden;margin:8px 0 18px}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--b600),var(--cyan));transition:width .4s}
+.q{font-size:1.12rem;font-weight:600;color:var(--b900);margin-bottom:16px;line-height:1.45}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;background:#f5f9ff;border:1.5px solid var(--line);padding:13px 15px;border-radius:13px;font-size:.93rem;color:#22406b;font-weight:500}
+.opt:hover:not(:disabled){border-color:var(--b400);background:#eaf4ff;transform:translateX(3px)}
+.opt .k{display:inline-block;background:var(--b700);color:#fff;border-radius:7px;width:24px;height:24px;text-align:center;line-height:24px;font-size:.75rem;margin-right:9px;font-weight:700}
+.opt.ok{background:#e9fbef;border-color:var(--ok);color:#14532d}
+.opt.ok .k{background:var(--ok)}
+.opt.bad{background:#fdecec;border-color:var(--bad);color:#7f1d1d;animation:shake .4s}
+.opt:disabled{cursor:default}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.fb{border-radius:13px;padding:14px 16px;margin-top:16px;font-size:.9rem;line-height:1.5;animation:fade .3s}
+.fb.ok{background:#e9fbef;border:1.5px solid var(--ok)}
+.fb.bad{background:#fdecec;border:1.5px solid var(--bad)}
+.fb b{display:block;margin-bottom:4px}
+.next{margin-top:16px;float:right}
+.matchwrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+@media(max-width:640px){.matchwrap{grid-template-columns:1fr}}
+.mcol{display:grid;gap:9px;align-content:start}
+.mcol h4{color:var(--b700);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px}
+.mitem{text-align:left;background:#f5f9ff;border:1.5px solid var(--line);padding:12px;border-radius:12px;font-size:.86rem;color:#22406b;font-weight:500}
+.mitem:hover:not(.done){border-color:var(--b400)}
+.mitem.sel{border-color:var(--b600);background:#e3f0ff;box-shadow:0 0 0 3px rgba(21,101,192,.18)}
+.mitem.done{background:#e9fbef;border-color:var(--ok);color:#14532d;cursor:default}
+.mitem.err{animation:shake .4s;background:#fdecec;border-color:var(--bad)}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(8,36,79,.55);display:flex;align-items:center;justify-content:center;padding:18px;animation:fade .25s}
+.mcard{background:#fff;border-radius:20px;max-width:430px;width:100%;padding:28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:pop .3s}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.bigstars{font-size:2.4rem;letter-spacing:6px;margin:6px 0;color:var(--gold)}
+.resgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:18px 0}
+.stat{background:#f2f8ff;border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{font-size:1.35rem;color:var(--b700);display:block}
+.stat span{font-size:.72rem;color:var(--muted)}
+.badge{font-size:1.25rem;font-weight:800;color:var(--b800);background:linear-gradient(135deg,#fff8e1,#ffe9b0);border:1px solid #f3d47c;padding:12px 20px;border-radius:14px;display:inline-block;margin:10px 0}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.cf{position:absolute;top:-12px;border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+footer{position:relative;z-index:2;text-align:center;color:var(--muted);font-size:.72rem;padding:0 16px 26px}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--b600),var(--cyan));display:inline-flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;box-shadow:var(--shadow);margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="deco c1"></div><div class="deco c2"></div><div class="deco c3"></div>
+
+<header>
+  <div class="brand"><b>🗄️ Desafio do DBA</b><span>Administração de BD & Estimativa de Crescimento — Semana #6</span></div>
+  <div class="hud">
+    <div class="chip">🏆 <small>Pontos:</small> <span id="hudScore">0</span></div>
+    <div class="chip">🔥 <small>Sequência:</small> <span id="hudStreak">0</span></div>
+    <button class="chip" id="btnMute" title="Som">🔊</button>
+    <button class="chip" id="btnHome" title="Mapa de níveis">🏠</button>
+  </div>
+</header>
+
+<main>
+  <!-- ==================== START ==================== -->
+  <section id="scr-start" class="screen">
+    <div class="card center">
+      <div class="logo">J</div>
+      <h1>Desafio do DBA 🛡️</h1>
+      <p class="sub">Jogo interativo baseado na aula <b>Semana #6</b> — Administração de bancos de dados e Estimativa de crescimento (Universidade Jala).</p>
+      <ul class="rules">
+        <li><b>5 níveis:</b> Mirroring · Splitting · Os 3 Vs · Estimativa de Crescimento · Caso de Estudo</li>
+        <li>Resposta certa no quiz = <b>10 pontos</b>; ligar o par à primeira = <b>10</b> (depois = 5)</li>
+        <li>Acerte <b>tudo</b> num nível e ganhe <b>+5 de bônus “Perfeito!”</b> ⭐</li>
+        <li>Complete um nível para <b>desbloquear o próximo</b> — o progresso fica salvo no navegador</li>
+      </ul>
+      <div style="margin:6px 0 14px">
+        <input id="inpName" maxlength="18" placeholder="Digite seu nome, futuro DBA…">
+      </div>
+      <button class="btn" id="btnStart">▶ Iniciar Jogo</button>
+      <p class="sub" style="margin-top:14px" id="bestTxt">Melhor pontuação: —</p>
+      <button class="btn ghost small" id="btnReset">🗑 Zerar progresso</button>
+    </div>
+  </section>
+
+  <!-- ==================== LEVEL MAP ==================== -->
+  <section id="scr-levels" class="screen hidden">
+    <div class="card center">
+      <h1>Mapa de Níveis</h1>
+      <p class="sub" id="welcomeTxt"></p>
+      <div class="levels" id="lvlGrid"></div>
+      <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" id="btnFinish">📊 Ver Resultado Final</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== QUIZ ==================== -->
+  <section id="scr-quiz" class="screen hidden">
+    <div class="card">
+      <div class="quizhead">
+        <span class="chip" id="qLevel"></span>
+        <span class="chip" id="qCount"></span>
+      </div>
+      <div class="pbar"><i id="qBar"></i></div>
+      <div class="q" id="qText"></div>
+      <div class="opts" id="qOpts"></div>
+      <div id="qFb"></div>
+      <button class="btn next hidden" id="qNext">Continuar ➜</button>
+    </div>
+  </section>
+
+  <!-- ==================== MATCH ==================== -->
+  <section id="scr-match" class="screen hidden">
+    <div class="card">
+      <div class="quizhead">
+        <span class="chip" id="mLevel"></span>
+        <span class="chip" id="mCount"></span>
+      </div>
+      <p class="sub" style="margin:6px 0 2px">Clique num item da <b>esquerda</b> e depois no seu par da <b>direita</b>. Acertos à primeira valem 10 pontos!</p>
+      <div class="pbar"><i id="mBar"></i></div>
+      <div class="matchwrap">
+        <div class="mcol"><h4>Conceitos</h4><div id="mLeft"></div></div>
+        <div class="mcol"><h4>Definições</h4><div id="mRight"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== RESULT ==================== -->
+  <section id="scr-result" class="screen hidden">
+    <div class="card center">
+      <div style="font-size:3.4rem" id="resEmoji">🏆</div>
+      <h1 id="resRank">Resultado</h1>
+      <div class="badge" id="resBadge"></div>
+      <div class="resgrid">
+        <div class="stat"><b id="resPts">0</b><span>PONTOS</span></div>
+        <div class="stat"><b id="resPct">0%</b><span>APROVEITAMENTO</span></div>
+        <div class="stat"><b id="resStars">0</b><span>ESTRELAS ⭐</span></div>
+      </div>
+      <div id="resDetail" style="text-align:left;font-size:.85rem;color:#33507a;margin-bottom:18px"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" id="btnReplay">🔁 Jogar Novamente</button>
+        <button class="btn ghost" id="btnMap">🗺 Mapa de Níveis</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal hidden" id="modal"><div class="mcard" id="mcard"></div></div>
+<div id="confetti"></div>
+
+<footer>Material apenas para uso acadêmico — Jala University · Semana #6: Administração de bancos de dados e Estimativa de crescimento.</footer>
+
+<script>
+/* ============ DADOS (conteúdo extraído do anexo) ============ */
+const LEVELS=[
+{id:1,icon:"🪞",title:"Mirroring (Espelhamento)",kind:"quiz",meta:"Quiz · 5 perguntas",
+ tip:"O espelho mantém uma cópia exata do banco num servidor separado. Registros de transações são transferidos continuamente e aplicados na mesma ordem. Em falha do primário, o espelho assume. Síncrona confirma nos dois servidores; assíncrona só no principal.",
+ questions:[
+ {q:"O que é o princípio do espelho (database mirroring)?",
+  o:["Manter uma cópia exata do banco de dados em um servidor separado, chamado servidor espelho","Dividir as tabelas do banco entre vários servidores","Criar cópias de segurança em fitas magnéticas","Remover registros duplicados do banco"],a:0,
+  e:"O mirroring mantém uma cópia exata e sincronizada do banco em um servidor espelho, garantindo redundância e disponibilidade."},
+ {q:"Em que se baseia o modo de operação do espelho?",
+  o:["Na transferência contínua de registros de transações do servidor principal para o espelho","Na comparação manual dos dados uma vez por semana","Na cópia completa do banco a cada 24 horas","Na duplicação apenas dos arquivos de índice"],a:0,
+  e:"Os registros contêm inserções, atualizações e exclusões feitas no principal e são enviados continuamente ao espelho."},
+ {q:"Como é mantida a sincronização entre o servidor principal e o espelho?",
+  o:["Os registros são aplicados no espelho na mesma ordem em que foram gerados no principal","O espelho escolhe a ordem que quiser para aplicar os dados","A sincronização acontece só quando o servidor é reiniciado","Os dados são embaralhados para economizar banda"],a:0,
+  e:"Aplicar os registros na mesma ordem garante que o espelho seja uma réplica exata do primário."},
+ {q:"Em caso de falha do servidor primário, o que acontece no mirroring?",
+  o:["O servidor espelho assume a função de primário e os serviços continuam sem interrupções","O sistema fica indisponível até o principal voltar","Os usuários precisam recadastrar todos os dados","O banco é automaticamente apagado"],a:0,
+  e:"A redundância permite o failover: o espelho assume e o sistema continua a fornecer serviços."},
+ {q:"Qual é a característica principal da replicação ASSÍNCRONA?",
+  o:["Confirma a transação no principal sem aguardar o espelho — melhor desempenho, pequena chance de perda de dados","Confirma em ambos os servidores antes de concluir a transação","Não envia nenhum registro ao espelho","Só funciona com bancos de dados pequenos"],a:0,
+  e:"Síncrona = confirma nos dois servidores (mais consistência, menos desempenho). Assíncrona = confirma só no principal (mais desempenho, risco pequeno de perda)."}]},
+
+{id:2,icon:"✂️",title:"Database Splitting",kind:"quiz",meta:"Quiz · 5 perguntas",
+ tip:"Splitting divide o banco em partes menores distribuídas por vários servidores, melhorando a escalabilidade. Horizontal divide LINHAS; vertical divide COLUNAS. Exige replicação/sincronização e atenção à latência.",
+ questions:[
+ {q:"O que é Database Splitting?",
+  o:["Técnica que divide o banco em partes menores e as distribui por vários servidores ou nós","Manter uma cópia exata do banco em outro servidor","Compactar o banco para ocupar menos espaço","Criar índices para acelerar consultas"],a:0,
+  e:"Cada parte fica armazenada e gerenciada em um servidor separado."},
+ {q:"Qual é o principal benefício do particionamento para o sistema?",
+  o:["Escalabilidade — a carga é distribuída e o sistema suporta maior volume de dados e transações","Elimina a necessidade de backups","Garante que nunca haja falhas de hardware","Reduz o tamanho dos dados pela metade"],a:0,
+  e:"Ao dividir o banco, a carga de trabalho é distribuída por vários servidores."},
+ {q:"Quais critérios podem guiar a distribuição de dados entre os servidores?",
+  o:["Localização geográfica, funcionalidade ou tipo de dados","A cor do gabinete dos servidores","Ordem alfabética dos nomes das tabelas","A data de compra do hardware"],a:0,
+  e:"A escolha dos critérios faz parte do desenho do particionamento."},
+ {q:"Como garantir consistência e coerência entre as partes do banco dividido?",
+  o:["Com técnicas de replicação e sincronização de dados entre os servidores","Desligando os servidores alternadamente","Evitando fazer alterações nos dados","Usando apenas um usuário por servidor"],a:0,
+  e:"Alterações feitas em um servidor devem ser refletidas nos outros."},
+ {q:"No particionamento VERTICAL, o que é dividido entre os servidores?",
+  o:["As COLUNAS de uma tabela","As LINHAS de uma tabela","Os backups do banco","As senhas dos usuários"],a:0,
+  e:"Horizontal divide as linhas; vertical divide as colunas."}]},
+
+{id:3,icon:"🧩",title:"Os 3 Vs + Conceitos",kind:"match",meta:"Ligar pares · 6 pares",
+ tip:"Volume = quantidade de dados. Velocity = velocidade do processo de dados. Variety = tipos de dados. Revise também espelho e particionamento!",
+ pairs:[
+ ["📊 Volume","Quantidade de dados: Terabytes, transações, tabelas/arquivos e registros"],
+ ["⚡ Velocity","Velocidade do processo de dados: Real time, Near time, Batches e Streams"],
+ ["🎭 Variety","Tipos de dados: Estruturados, Não estruturados, Semiestruturados e Mistos"],
+ ["🪞 Servidor Espelho","Cópia exata do banco que assume a função de primário em caso de falha"],
+ ["↔️ Particionamento Horizontal","Distribui as LINHAS de uma tabela entre os servidores"],
+ ["📈 Plano de Capacidade","Define como os dados serão armazenados conforme o banco cresce"]]},
+
+{id:4,icon:"📈",title:"Estimativa de Crescimento",kind:"quiz",meta:"Quiz · 5 perguntas",
+ tip:"Para estimar crescimento: análise histórica (crescimento anterior), tendências, análise de negócios e modelos de predição. SQL pode extrair o crescimento por mês dos datafiles.",
+ questions:[
+ {q:"Quais fatores influenciam a estimativa de crescimento do banco de dados?",
+  o:["Tipo de banco, volume de dados existentes, taxa de inserção de novos dados e capacidade de armazenamento","Apenas o preço do disco rígido","Somente a versão do sistema operacional","O número de monitores ligados aos servidores"],a:0,
+  e:"Com esses fatores é possível criar um plano de capacidade."},
+ {q:"O que é a análise histórica na estimativa de crescimento?",
+  o:["Examinar o crescimento anterior (nº de registros, tamanhos de arquivo) e projetar o futuro","Pesquisar a história da empresa fundadora","Ler logs antigos apenas por curiosidade","Contar quantos usuários se cadastraram hoje"],a:0,
+  e:"Com dados históricos, técnicas estatísticas podem gerar projeções futuras."},
+ {q:"Por que a análise de negócios é importante na estimativa?",
+  o:["Planos como expansão para novos mercados ou novos produtos podem aumentar muito os dados","Porque o marketing decide o tamanho das tabelas","Porque os concorrentes têm bancos maiores","Porque o faturamento ocupa espaço no disco"],a:0,
+  e:"Iniciativas futuras podem causar aumento significativo nos dados armazenados."},
+ {q:"Quais técnicas podem ser usadas nos modelos de predição?",
+  o:["Métodos estatísticos, modelos matemáticos e aprendizado de máquina","Somente chutar com base na experiência","Apenas perguntar aos usuários","Copiar o tamanho do banco de outra empresa"],a:0,
+  e:"O modelo se ajusta aos dados históricos e permite fazer previsões futuras."},
+ {q:"A query em sys.v_$datafile agrupada por 'YYYY Month' calcula:",
+  o:["O espaço adicionado aos datafiles por mês (crescimento em GB)","O número de usuários conectados por mês","O tempo de resposta das consultas por mês","A quantidade de índices recriados por mês"],a:0,
+  e:"Ela soma os bytes agrupados pelo mês de criação dos datafiles — crescimento mensal."}]},
+
+{id:5,icon:"🏭",title:"Caso de Estudo (ERP)",kind:"quiz",meta:"Quiz · 6 perguntas",
+ tip:"Caso: ERPDB 2,66 TB + S1DB 0,30299 TB + S2DB 0,00124 TB + PVDB 0,08388 TB = 3,04811 TB. Tabela mais pesada: F4211 (200,55 GB). Atividade da aula: projetar o banco em 1, 2 e 5 anos!",
+ questions:[
+ {q:"Some: ERPDB 2,66 TB + S1DB 0,30299 TB + S2DB 0,00124 TB + PVDB 0,08388 TB. Qual o total?",
+  o:["3,04811 TB","2,66 TB","3,48 TB","30,48 TB"],a:0,
+  e:"2,66 + 0,30299 + 0,00124 + 0,08388 = 3,04811 TB."},
+ {q:"Qual tabela pesa mais no caso de estudo?",
+  o:["[PRODDTA].[F4211] — 200,55 GB","[PRODDTA].[F0902] — 95,05 GB","[PRODDTA].[F4311] — 61,13 GB","[PRODDTA].[F0005] — 0,05 GB"],a:0,
+  e:"F4211 tem 35.478.642 linhas e pesa 200,55 GB."},
+ {q:"O peso acumulado das tabelas listadas no caso é:",
+  o:["488,11 GB","200,55 GB","3,04811 GB","48,40 GB"],a:0,
+  e:"O 'PESO DE TABLAS ACUMULADO' é 488,11 GB."},
+ {q:"O banco tem 3,04811 TB e cresce 1% ao mês. Qual o tamanho após 1 ANO (12 meses)?",
+  o:["≈ 3,44 TB","≈ 3,06 TB","≈ 4,50 TB","≈ 6,10 TB"],a:0,
+  e:"3,04811 × 1,01¹² ≈ 3,04811 × 1,1268 ≈ 3,44 TB."},
+ {q:"Com o mesmo crescimento de 1% ao mês, qual o tamanho após 5 ANOS (60 meses)?",
+  o:["≈ 5,54 TB","≈ 3,05 TB","≈ 9,14 TB","≈ 60 TB"],a:0,
+  e:"3,04811 × 1,01⁶⁰ ≈ 3,04811 × 1,8167 ≈ 5,54 TB."},
+ {q:"Usando splitting em 4 servidores iguais, quanto cada um guardaria dos 3,04811 TB?",
+  o:["≈ 0,76 TB","≈ 3,05 TB","≈ 1,52 TB","≈ 12,19 TB"],a:0,
+  e:"3,04811 ÷ 4 ≈ 0,762 TB por servidor."}]}
+];
+
+/* ============ ESTADO & PERSISTÊNCIA ============ */
+const PTS=10,PTS2=5,BONUS=5;
+const MAXS=LEVELS.map(l=>l.kind==="quiz"?l.questions.length*PTS+BONUS:l.pairs.length*PTS+BONUS);
+const TOTMAX=MAXS.reduce((a,b)=>a+b,0);
+const S={name:"DBA",level:null,qi:0,qc:0,streak:0,runScores:{},runStars:{},answered:false,
+         selL:null,selR:null,mDone:0,mAttempts:{},mFirst:{}};
+let prog;try{prog=JSON.parse(localStorage.getItem("dbaGame"))||{}}catch(e){prog={}}
+prog.unlocked=prog.unlocked||1;prog.best=prog.best||{};prog.bestTotal=prog.bestTotal||0;
+const save=()=>localStorage.setItem("dbaGame",JSON.stringify(prog));
+const $=id=>document.getElementById(id);
+const screens=["scr-start","scr-levels","scr-quiz","scr-match","scr-result"];
+function show(id){screens.forEach(s=>$(s).classList.add("hidden"));$(id).classList.remove("hidden");window.scrollTo(0,0)}
+function updateHud(){$("hudScore").textContent=Object.values(S.runScores).reduce((a,b)=>a+b,0);$("hudStreak").textContent=S.streak}
+
+/* ============ SOM ============ */
+let actx=null,muted=false;
+function beep(f,d,t="sine",v=.12){if(muted)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+ const o=actx.createOscillator(),g=actx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;
+ o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);o.stop(actx.currentTime+d)}catch(e){}}
+const sOk=()=>{beep(660,.12);setTimeout(()=>beep(990,.2),110)};
+const sBad=()=>beep(180,.28,"sawtooth",.09);
+const sWin=()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.22),i*140));
+ $("btnMute").onclick=e=>{muted=!muted;e.target.textContent=muted?"🔇":"🔊"};
+
+/* ============ CONFETTI ============ */
+function confetti(n=90){const c=$("confetti"),cols=["#2196f3","#00b0ff","#ffb300","#22c55e","#ef4444","#1565c0"];
+ for(let i=0;i<n;i++){const d=document.createElement("div");d.className="cf";
+  d.style.cssText=`left:${Math.random()*100}%;width:${6+Math.random()*7}px;height:${9+Math.random()*10}px;background:${cols[i%cols.length]};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*.6}s`;
+  c.appendChild(d);setTimeout(()=>d.remove(),4600)}}
+
+/* ============ INÍCIO ============ */
+ $("btnStart").onclick=()=>{S.name=$("inpName").value.trim()||"DBA";$("welcomeTxt").textContent=`Bem-vindo(a), ${S.name}! Escolha um nível para começar.`;renderLevels();show("scr-levels");beep(520,.1)};
+ $("btnReset").onclick=()=>{if(confirm("Apagar todo o progresso salvo?")){prog={unlocked:1,best:{},bestTotal:0};save();location.reload()}};
+ $("btnHome").onclick=()=>{if(S.runStars&&Object.keys(S.runStars).length)renderLevels();show("scr-levels")};
+function showBest(){$("bestTxt").textContent=prog.bestTotal?`Melhor pontuação: ${prog.bestTotal}/${TOTMAX} 🏆`:"Melhor pontuação: —"}
+showBest();
+
+/* ============ MAPA ============ */
+function renderLevels(){const g=$("lvlGrid");g.innerHTML="";
+ LEVELS.forEach((l,i)=>{const locked=l.id>prog.unlocked;const b=prog.best[l.id];
+  const d=document.createElement("div");d.className="lvl"+(locked?" locked":"");
+  d.innerHTML=`<h3>${l.icon} Nível ${l.id}: ${l.title}</h3><span class="meta">${locked?"🔒 Complete o nível anterior":l.meta}</span>
+   ${b?`<span class="stars">${"⭐".repeat(b.stars)}${"☆".repeat(3-b.stars)} <small style="color:var(--muted)">melhor: ${b.score} pts</small></span>`:""}
+   ${locked?"":`<button class="tipbtn">📘 Dica da teoria</button><div class="tipbox hidden">${l.tip}</div>
+   <button class="btn small" style="align-self:flex-start">${b?"🔁 Repetir":"▶ Jogar"}</button>`}`;
+  if(!locked){
+   d.querySelector(".tipbtn").onclick=()=>d.querySelector(".tipbox").classList.toggle("hidden");
+   d.querySelector(".btn").onclick=()=>startLevel(i)}
+  g.appendChild(d)})}
+
+/* ============ QUIZ ============ */
+function startLevel(i){const l=LEVELS[i];S.level=i;S.qi=0;S.qc=0;S.streak=0;S.answered=false;
+ if(l.kind==="quiz"){show("scr-quiz");renderQuiz()}else{show("scr-match");initMatch()}}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function renderQuiz(){const l=LEVELS[S.level],q=l.questions[S.qi];S.answered=false;
+ $("qLevel").textContent=`${l.icon} ${l.title}`;
+ $("qCount").textContent=`Pergunta ${S.qi+1}/${l.questions.length}`;
+ $("qBar").style.width=(S.qi/l.questions.length*100)+"%";
+ $("qText").textContent=q.q;$("qFb").innerHTML="";$("qNext").classList.add("hidden");
+ const box=$("qOpts");box.innerHTML="";
+ shuffle(q.o.map((t,ix)=>({t,ok:ix===q.a}))).forEach((op,ix)=>{
+  const b=document.createElement("button");b.className="opt";
+  b.innerHTML=`<span class="k">${"ABCD"[ix]}</span>${op.t}`;
+  b.onclick=()=>answer(b,op.ok);box.appendChild(b)})}
+function answer(btn,ok){if(S.answered)return;S.answered=true;
+ const l=LEVELS[S.level],q=l.questions[S.qi],fb=$("qFb");
+ [...$("qOpts").children].forEach(b=>{b.disabled=true;
+  if(b===btn&&ok)b.classList.add("ok");
+  if(b===btn&&!ok)b.classList.add("bad");
+  if(ok===false&&b.innerHTML.includes(q.o[q.a]))b.classList.add("ok")});
+ const perfect=S.qc===l.questions.length;
+ if(ok){S.qc++;S.streak++;sOk()}else{S.streak=0;sBad()}
+ fb.innerHTML=ok?`<div class="fb ok"><b>✅ Correto! ${S.streak>=3?"🔥 Sequência de "+S.streak:""}</b>${q.e}</div>`
+                :`<div class="fb bad"><b>❌ Não foi essa…</b>${q.e}</div>`;
+ const nx=$("qNext");nx.classList.remove("hidden");
+ nx.textContent=S.qi+1<l.questions.length?"Continuar ➜":"Ver resultado do nível 🎉";
+ $("qBar").style.width=((S.qi+1)/l.questions.length*100)+"%"}
+ $("qNext").onclick=()=>{const l=LEVELS[S.level];
+ if(S.qi+1<l.questions.length){S.qi++;renderQuiz()}
+ else{const max=l.questions.length*PTS;let score=S.qc*PTS;const st=S.qc/l.questions.length;
+  if(S.qc===l.questions.length){score+=BONUS;confetti(50)}levelDone(score,max,st)}};
+
+/* ============ MATCH ============ */
+function initMatch(){const l=LEVELS[S.level];S.mDone=0;S.mAttempts={};S.mFirst={};S.selL=null;S.selR=null;
+ $("mLevel").textContent=`${l.icon} ${l.title}`;
+ const n=l.pairs.length;$("mLeft").innerHTML="";$("mRight").innerHTML="";
+ l.pairs.forEach((p,i)=>{const b=document.createElement("button");b.className="mitem";b.dataset.pid=i;b.textContent=p[0];
+  b.onclick=()=>pick("L",b);$("mLeft").appendChild(b)});
+ shuffle(l.pairs.map((p,i)=>({t:p[1],pid:i}))).forEach(o=>{const b=document.createElement("button");
+  b.className="mitem";b.dataset.pid=o.pid;b.textContent=o.t;b.onclick=()=>pick("R",b);$("mRight").appendChild(b)});
+ $("mCount").textContent=`Pares: 0/${n}`;$("mBar").style.width="0%"}
+function pick(side,el){if(el.classList.contains("done"))return;
+ if(side==="L"){S.selL=el;$("mLeft").querySelectorAll(".mitem").forEach(x=>x.classList.remove("sel"));el.classList.add("sel")}
+ else{S.selR=el;$("mRight").querySelectorAll(".mitem").forEach(x=>x.classList.remove("sel"));el.classList.add("sel")}
+ if(S.selL&&S.selR)checkPair()}
+function checkPair(){const L=S.selL,R=S.selR,pidL=L.dataset.pid,pidR=R.dataset.pid;
+ L.classList.remove("sel");R.classList.remove("sel");S.selL=S.selR=null;
+ S.mAttempts[pidL]=(S.mAttempts[pidL]||0)+1;
+ if(pidL===pidR){const first=S.mAttempts[pidL]===1;S.mFirst[pidL]=first;
+  L.classList.add("done");R.classList.add("done");S.mDone++;sOk();
+  if(first)S.streak++;updateHud();
+  const n=LEVELS[S.level].pairs.length;
+  $("mCount").textContent=`Pares: ${S.mDone}/${n}`;
+  $("mBar").style.width=(S.mDone/n*100)+"%";
+  if(S.mDone===n){let score=0;Object.values(S.mFirst).forEach(f=>score+=f?PTS:PTS2);
+   const max=n*PTS;const st=Object.values(S.mFirst).filter(Boolean).length/n;
+   if(Object.values(S.mFirst).every(Boolean)){score+=BONUS;confetti(50)}levelDone(score,max,st)}}
+ else{sBad();S.streak=0;updateHud();R.classList.add("err");setTimeout(()=>R.classList.remove("err"),450)}}
+
+/* ============ NÍVEL CONCLUÍDO ============ */
+function levelDone(score,max,ratio){const id=LEVELS[S.level].id;
+ S.runScores[id]=score;const stars=ratio>=.99?3:ratio>=.7?2:1;S.runStars[id]=stars;
+ if(!prog.best[id]||score>prog.best[id].score)prog.best[id]={score,stars};
+ prog.unlocked=Math.max(prog.unlocked,Math.min(id+1,LEVELS.length));save();updateHud();sWin();
+ const nxt=LEVELS[S.level+1];
+ $("mcard").innerHTML=`<div style="font-size:3rem">${stars===3?"🌟":stars===2?"🎉":"👍"}</div>
+  <h2>Nível ${id} concluído!</h2>
+  <div class="bigstars">${"⭐".repeat(stars)}${"☆".repeat(3-stars)}</div>
+  <p style="color:var(--muted);font-size:.9rem">Pontos no nível: <b>${score}/${max}</b>${score===max?" — Perfeito! +5 de bônus 🎁":""}</p>
+  <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap">
+   ${nxt?`<button class="btn" id="mNext">Nível ${nxt.id}: ${nxt.icon} ${nxt.title} ➜</button>`:""}
+   <button class="btn ${nxt?"ghost":""}" id="mMap">🗺 Mapa</button></div>`;
+ $("modal").classList.remove("hidden");
+ if($("mNext"))$("mNext").onclick=()=>{$("modal").classList.add("hidden");startLevel(S.level+1)};
+ $("mMap").onclick=()=>{$("modal").classList.add("hidden");renderLevels();show("scr-levels")}}
+
+/* ============ RESULTADO FINAL ============ */
+function finish(){const total=Object.values(S.runScores).reduce((a,b)=>a+b,0);
+ const played=Object.keys(S.runScores).length;if(!played){alert("Jogue pelo menos um nível primeiro! 🙂");return}
+ const pct=Math.round(total/TOTMAX*100);const stars=Object.values(S.runStars).reduce((a,b)=>a+b,0);
+ if(total>prog.bestTotal){prog.bestTotal=total;save();showBest()}
+ const rank=pct>=90?["🏆","DBA Master!"]:pct>=75?["🥇","Administrador Sênior"]:pct>=60?["🥈","Administrador Pleno"]:pct>=40?["🥉","Administrador Júnior"]:["🌱","Estagiário de BD"];
+ $("resEmoji").textContent=rank[0];$("resRank").textContent=`${S.name}, você é: ${rank[1]}`;
+ $("resBadge").textContent=`${total} / ${TOTMAX} pontos`;
+ $("resPts").textContent=total;$("resPct").textContent=pct+"%";$("resStars").textContent=stars+"/"+TOTMAX/10;
+ $("resDetail").innerHTML=LEVELS.map(l=>{const sc=S.runScores[l.id];
+  return sc!==undefined?`<div>✔ ${l.icon} <b>${l.title}</b>: ${sc}/${MAXS[l.id-1]} pts · ${"⭐".repeat(S.runStars[l.id])}</div>`:`<div>◻ ${l.icon} ${l.title}: não jogado</div>`}).join("");
+ show("scr-result");if(pct>=60)confetti(120);sWin()}
+ $("btnFinish").onclick=finish;
+ $("btnReplay").onclick=()=>{S.runScores={};S.runStars={};S.streak=0;updateHud();renderLevels();show("scr-levels")};
+ $("btnMap").onclick=()=>{renderLevels();show("scr-levels")};
+
+/* ============ TECLADO ============ */
+document.addEventListener("keydown",e=>{
+ if(!$("scr-quiz").classList.contains("hidden")){
+  if(!S.answered&&"1234".includes(e.key)){const o=$("qOpts").children[+e.key-1];if(o)o.click()}
+  if(e.key==="Enter"&&S.answered)$("qNext").click()}});
+updateHud();
+</script>
+</body>
+</html>
