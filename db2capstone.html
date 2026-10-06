@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🎓 Tutorial Guia — TO-DO List com Banco de Dados | Avaliação Final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --b900:#08244f;--b800:#0a2f6b;--b700:#0d47a1;--b600:#1565c0;--b400:#2196f3;--cyan:#00b0ff;
+  --ink:#10233f;--muted:#5b7396;--bg:#eef5ff;--card:#fff;--line:#d7e5f8;
+  --ok:#22c55e;--bad:#ef4444;--gold:#ffb300;--r:16px;--shadow:0 8px 24px rgba(13,71,161,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Poppins',system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);
+  background:radial-gradient(900px 500px at 110% -10%,rgba(0,176,255,.15),transparent 60%),
+             radial-gradient(700px 420px at -10% 110%,rgba(21,101,192,.14),transparent 60%),
+             linear-gradient(180deg,var(--bg),#f8fbff 50%,var(--bg));min-height:100vh}
+
+/* ===== TOPBAR ===== */
+.topbar{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,var(--b800),var(--b600));
+  color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px;box-shadow:0 4px 18px rgba(8,36,79,.35)}
+.topbar .brand{font-weight:800;font-size:1rem;line-height:1.2}
+.topbar .brand span{display:block;font-weight:400;font-size:.72rem;opacity:.85}
+.topbar .hud{margin-left:auto;display:flex;align-items:center;gap:8px}
+.progress-mini{background:rgba(255,255,255,.18);border-radius:99px;padding:4px 12px;font-size:.78rem;display:flex;gap:8px;align-items:center;min-width:150px}
+.progress-mini .track{flex:1;height:8px;background:rgba(255,255,255,.25);border-radius:99px;overflow:hidden}
+.progress-mini .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7dffb0,#00e5ff);transition:width .4s}
+.iconbtn{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:1rem;cursor:pointer;transition:.2s}
+.iconbtn:hover{background:rgba(255,255,255,.3)}
+#menuBtn{display:none}
+
+/* ===== LAYOUT ===== */
+.layout{display:flex;max-width:1240px;margin:0 auto;gap:20px;padding:20px 16px 60px}
+aside{width:270px;flex-shrink:0;position:sticky;top:76px;align-self:flex-start;max-height:calc(100vh - 96px);overflow:auto}
+aside .search{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:.85rem;outline:none;margin-bottom:10px;background:var(--card)}
+aside .search:focus{border-color:var(--b400)}
+nav .navlink{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:11px;color:#2a4a78;font-size:.83rem;font-weight:600;text-decoration:none;margin-bottom:3px;transition:.15s;border:1px solid transparent}
+nav .navlink:hover{background:#e4f0ff;border-color:var(--line)}
+nav .navlink.active{background:linear-gradient(135deg,var(--b600),var(--b400));color:#fff;box-shadow:var(--shadow)}
+nav .navlink .done{margin-left:auto;font-size:.8rem;color:var(--ok);font-weight:800}
+nav .navlink.active .done{color:#c8ffe0}
+.side-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-top:12px;box-shadow:var(--shadow);font-size:.78rem;color:var(--muted)}
+.side-card b{color:var(--b700)}
+.side-card .track{height:10px;background:#e3edfb;border-radius:99px;overflow:hidden;margin:8px 0}
+.side-card .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--b600),var(--cyan));transition:width .4s}
+
+/* ===== CONTEÚDO ===== */
+main{flex:1;min-width:0}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:26px 28px;margin-bottom:22px;animation:fade .4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+h1{font-size:clamp(1.4rem,3.4vw,2rem);color:var(--b800);line-height:1.25}
+h2{font-size:1.3rem;color:var(--b800);display:flex;align-items:center;gap:10px;margin-bottom:6px}
+h2 .ph{background:linear-gradient(135deg,var(--b600),var(--b400));color:#fff;font-size:.8rem;font-weight:800;padding:4px 12px;border-radius:99px;letter-spacing:.5px}
+h3{font-size:1.02rem;color:var(--b700);margin:20px 0 8px;display:flex;gap:8px;align-items:center}
+h3 .n{background:#e3f0ff;border:1px solid var(--line);color:var(--b700);font-size:.72rem;font-weight:800;padding:3px 10px;border-radius:8px}
+p,li{font-size:.92rem;line-height:1.65;color:#2b4568}
+.sub{color:var(--muted);font-size:.88rem;margin:4px 0 14px}
+ul.plain,ol.plain{padding-left:20px;margin:8px 0}
+ul.plain li,ol.plain li{margin:6px 0}
+ul.plain li::marker{color:var(--b400)}
+hr.soft{border:none;border-top:1.5px dashed var(--line);margin:20px 0}
+
+/* checklists */
+.chklist{margin:10px 0 4px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border:1.5px solid var(--line);border-radius:11px;margin-bottom:7px;background:#f8fbff;cursor:pointer;font-size:.87rem;color:#2b4568;transition:.15s}
+.chk:hover{border-color:var(--b400);background:#eef6ff}
+.chk input{margin-top:3px;accent-color:var(--b600);width:16px;height:16px;flex-shrink:0;cursor:pointer}
+.chk input:checked + span{color:#6b7f9d;text-decoration:line-through}
+.chk:has(input:checked){background:#f0fdf4;border-color:#b7e4c0}
+
+/* callouts */
+.callout{border-radius:13px;padding:13px 16px;margin:12px 0;font-size:.87rem;line-height:1.6;border:1.5px solid}
+.callout b{display:block;margin-bottom:3px}
+.c-dica{background:#e8f4ff;border-color:#b5d8fb;color:#1c4a86}
+.c-reflex{background:#f3edff;border-color:#d4c4fb;color:#4c2e9e}
+.c-armadilha{background:#fff1ec;border-color:#ffc9b3;color:#9a3412}
+.c-atencao{background:#fff8e1;border-color:#ffe08a;color:#8a6100}
+.c-ondeest{background:#eafaf0;border-color:#b7e4c0;color:#166534}
+
+/* details */
+details{border:1.5px solid var(--line);border-radius:12px;margin:10px 0;background:#fbfdff;overflow:hidden}
+details summary{cursor:pointer;padding:11px 14px;font-weight:700;font-size:.87rem;color:var(--b700);list-style:none;display:flex;align-items:center;gap:8px}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸";transition:.2s;color:var(--b400)}
+details[open] summary::before{transform:rotate(90deg)}
+details .inner{padding:0 16px 14px}
+
+/* tabelas */
+.tblwrap{overflow-x:auto;margin:12px 0;border-radius:12px;border:1px solid var(--line)}
+table.tbl{width:100%;border-collapse:collapse;font-size:.84rem;min-width:560px}
+table.tbl th{background:linear-gradient(135deg,var(--b700),var(--b600));color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+table.tbl td{padding:9px 12px;border-top:1px solid var(--line);color:#2b4568;vertical-align:top}
+table.tbl tr:nth-child(even) td{background:#f5f9ff}
+
+/* código */
+pre.code{background:#0b1f3d;color:#dbeafe;border-radius:12px;padding:16px 18px;font-size:.8rem;line-height:1.6;overflow-x:auto;margin:12px 0;font-family:'Consolas','Courier New',monospace}
+pre.code .c{color:#7aa7d9}
+
+/* badge fase */
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.badge{font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:99px;border:1px solid}
+.bg-blue{background:#e8f2ff;color:var(--b700);border-color:#c4ddfb}
+.bg-gold{background:#fff6df;color:#8a6100;border-color:#f3d47c}
+.bg-green{background:#eafaf0;color:#166534;border-color:#b7e4c0}
+
+/* fluxo CRUD */
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0;font-size:.8rem;font-weight:700;color:var(--b700)}
+.flow span{background:#e8f2ff;border:1px solid #c4ddfb;padding:6px 12px;border-radius:99px}
+.flow i{color:var(--b400);font-style:normal}
+
+/* checklist final */
+.big-final .chk{font-size:.92rem;padding:11px 14px}
+
+/* hero */
+.hero{text-align:center;background:linear-gradient(135deg,var(--b800),var(--b600));color:#fff;border:none}
+.hero h1{color:#fff}
+.hero p{color:#dbeafe}
+.hero .pts{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:6px 18px;font-weight:800;margin:8px 4px 0;font-size:.85rem}
+
+/* footer */
+footer{max-width:1240px;margin:0 auto;padding:0 16px 34px;text-align:center;color:var(--muted);font-size:.75rem;line-height:1.7}
+footer b{color:var(--b700)}
+
+/* botões flutuantes */
+.fab{position:fixed;right:18px;bottom:18px;z-index:50;display:flex;flex-direction:column;gap:8px}
+.fab button{width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;font-size:1.1rem;box-shadow:0 6px 18px rgba(13,71,161,.3);transition:.2s}
+.fab .up{background:linear-gradient(135deg,var(--b600),var(--b400));color:#fff}
+.fab .pr{background:#fff;color:var(--b700);border:1px solid var(--line)}
+
+/* responsivo */
+@media(max-width:900px){
+  #menuBtn{display:block}
+  aside{position:fixed;z-index:45;top:60px;left:0;bottom:0;width:280px;background:#fff;
+        padding:16px 14px;transform:translateX(-105%);transition:.25s;box-shadow:8px 0 30px rgba(8,36,79,.25);max-height:none}
+  aside.open{transform:translateX(0)}
+  .layout{padding-top:12px}
+  section.card{padding:20px 18px}
+}
+@media print{
+  .topbar,aside,.fab,footer .noprint{display:none!important}
+  body{background:#fff}
+  .layout{display:block;max-width:100%;padding:0}
+  section.card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid;margin-bottom:14px}
+  details{page-break-inside:avoid}
+  details:not([open]) .inner{display:block}
+  .hero{background:#0d47a1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  a{color:inherit;text-decoration:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="iconbtn" id="menuBtn" title="Menu">☰</button>
+  <div class="brand">🎓 Tutorial Guia — TO-DO List + Banco de Dados
+    <span>Avaliação Final · defesa ao vivo na Semana 8 · entrega até 21 out, 22:59</span></div>
+  <div class="hud">
+    <div class="progress-mini"><div class="track"><i id="miniBar"></i></div><span id="miniTxt">0%</span></div>
+    <button class="iconbtn" id="btnPrint" title="Imprimir / PDF">🖨️</button>
+    <button class="iconbtn" id="btnReset" title="Zerar progresso">🗑️</button>
+  </div>
+</header>
+
+<div class="layout">
+<aside id="sidebar">
+  <input class="search" id="search" placeholder="🔎 Filtrar fases…">
+  <nav id="nav"></nav>
+  <div class="side-card">
+    <b>📊 Seu progresso</b>
+    <div class="track"><i id="sideBar"></i></div>
+    <span id="sideTxt">0 de 0 etapas concluídas</span>
+    <hr class="soft" style="margin:12px 0">
+    💾 O progresso é salvo <b>automaticamente</b> neste navegador.
+  </div>
+</aside>
+
+<main id="content">
+
+<!-- ============ HERO ============ -->
+<section class="card hero" id="p0">
+  <h1>🚀 Roteiro Metodológico<br>TO-DO List com Integração de Banco de Dados</h1>
+  <p>Tutorial passo a passo <b>sem respostas prontas</b>: ensina <i>o que</i> fazer, <i>em que ordem</i>,
+     <i>quais perguntas fazer a si mesmo</i> e <i>onde estudar</i>. O código final é seu e do seu grupo!</p>
+  <span class="pts">💰 160 pontos</span>
+  <span class="pts">🎤 Defesa em grupo — Semana 8</span>
+  <span class="pts">📅 Entrega: 21 out, 22:59</span>
+  <p style="margin-top:14px;font-size:.8rem">✅ Marque as caixas conforme avança — cada fase fica verde quando completa.</p>
+</section>
+
+<!-- ============ CRONOGRAMA ============ -->
+<section class="card" id="pCron">
+  <h2>🗓️ <span class="ph">VISÃO GERAL</span> Cronograma Sugerido</h2>
+  <p class="sub">Seis fases em ~5 semanas. Antecipe a Fase 6 — a documentação escrita durante o desenvolvimento vale ouro.</p>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>Semana</th><th>Fase</th><th>Entregável parcial</th></tr>
+    <tr><td>Set 16–22</td><td><b>Fase 1</b>: Escolha da stack + esboço do modelo</td><td>Stack definida + rascunho do ER</td></tr>
+    <tr><td>Set 23–29</td><td><b>Fase 2</b>: Modelagem do banco</td><td>Diagrama ER revisado pelo grupo</td></tr>
+    <tr><td>Set 30–Out 6</td><td><b>Fase 3 + 4</b>: Script de inicialização + conexão</td><td>Banco criável do zero + app conectado</td></tr>
+    <tr><td>Out 7–13</td><td><b>Fase 5 + 6</b>: CRUD + categorias/status</td><td>Regras de negócio completas</td></tr>
+    <tr><td>Out 14–18</td><td><b>Fase 7–9</b>: Segurança + CLI + testes</td><td>Versão funcional estável</td></tr>
+    <tr><td>Out 19–21</td><td><b>Fase 10–11</b>: Documentação + ensaio da defesa</td><td>Upload final pronto 🚀</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ FASE 1 ============ -->
+<section class="card" id="p1">
+  <h2>🧭 <span class="ph">FASE 1</span> Planejamento e Escolha da Stack</h2>
+  <div class="badges"><span class="badge bg-blue">Set 16–22</span><span class="badge bg-gold">Entregável: stack definida + rascunho ER</span></div>
+
+  <h3><span class="n">1.1</span> Decida a linguagem de programação</h3>
+  <p>Faça essas perguntas ao grupo <b>antes</b> de escolher:</p>
+  <ul class="plain">
+    <li>✅ Quem no grupo <b>já programa</b> nessa linguagem? <i>(O requisito da defesa diz que qualquer membro pode defender qualquer área — todos precisam entender tudo!)</i></li>
+    <li>✅ Existe <b>driver/biblioteca oficial</b> para o banco escolhido? <i>(Procure no site oficial do banco: seção <b>connectors</b>, <b>drivers</b> ou <b>ORM</b>.)</i></li>
+    <li>✅ É fácil criar um <b>menu de console</b>? <i>(Leia a documentação de entrada/saída padrão: <code>input</code>, <code>readline</code>, <code>Scanner</code>…)</i></li>
+  </ul>
+  <div class="callout c-dica"><b>💡 Dica</b>Anote a decisão por escrito — ela aparecerá na documentação (Fase 10).</div>
+
+  <h3><span class="n">1.2</span> Decida o tipo de banco de dados</h3>
+  <p>A tarefa permite <b>relacional</b> ou <b>não relacional</b>. Compare mentalmente:</p>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>Pergunta</th><th>Se responder "sim"…</th></tr>
+    <tr><td>Tarefas e categorias têm relação fixa (1 para N)?</td><td>Banco <b>relacional</b> tende a encaixar melhor</td></tr>
+    <tr><td>Prefere o caminho do Diagrama ER obrigatório?</td><td>Ele é exigido <b>apenas</b> para relacional</td></tr>
+    <tr><td>Prefere dicionário de dados com coleções?</td><td>O <b>não relacional</b> (com dicionário próprio) pode ser o caminho</td></tr>
+  </table></div>
+  <div class="callout c-reflex"><b>🤔 Pergunta-chave para o grupo</b>"Uma tarefa só pode pertencer a <i>uma</i> categoria — isso lembra qual tipo de relacionamento?" Discutam <b>antes</b> de desenhar qualquer coisa.</div>
+
+  <h3><span class="n">1.3</span> Monte o ambiente de desenvolvimento</h3>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Linguagem instalada e rodando (<code>--version</code> responde no terminal?)</span></label>
+    <label class="chk"><input type="checkbox"><span>Servidor do banco rodando (local, Docker ou nuvem)</span></label>
+    <label class="chk"><input type="checkbox"><span>Ferramenta gráfica para inspecionar o banco (para <b>ver</b> os dados enquanto testa)</span></label>
+    <label class="chk"><input type="checkbox"><span>Repositório Git criado, com acesso de todos os membros</span></label>
+  </div>
+  <div class="callout c-atencao"><b>🧪 Teste de fumaça</b>Execute um "Hello World" na linguagem e conecte-se ao banco com a ferramenta gráfica usando usuário e senha. Só comece a codificar depois disso.</div>
+  <details><summary>📚 Onde estudar esta fase</summary><div class="inner">
+    <p>Documentação oficial da linguagem (instalação e I/O) · documentação oficial do SGBD (instalação e conexão) · tutorial básico de Git (clone, commit, push).</p>
+  </div></details>
+</section>
+
+<!-- ============ FASE 2 ============ -->
+<section class="card" id="p2">
+  <h2>🗺️ <span class="ph">FASE 2</span> Modelagem do Banco de Dados</h2>
+  <div class="badges"><span class="badge bg-blue">Set 23–29</span><span class="badge bg-gold">Entregável: diagrama ER revisado</span></div>
+
+  <h3><span class="n">2.1</span> Liste as "coisas" (entidades)</h3>
+  <p>Releia o enunciado e sublinhe <b>substantivos que precisam ser guardados permanentemente</b>. Pergunte-se:</p>
+  <ul class="plain">
+    <li>O que precisa <b>sobreviver ao fechamento</b> do aplicativo?</li>
+    <li>"Tarefa" e "categoria" são coisas do mesmo tipo ou de tipos diferentes?</li>
+    <li>Quais <b>propriedades</b> cada uma tem? (texto, data, estado, dono…)</li>
+  </ul>
+
+  <h3><span class="n">2.2</span> Defina relacionamentos com a regra do "muitos"</h3>
+  <p>Para cada par de entidades, complete a frase:</p>
+  <pre class="code"><span class="c">-- Complete com suas entidades:</span>
+"Uma ______ pode ter muitas ______;
+ uma ______ pertence a apenas uma ______."</pre>
+  <ul class="plain">
+    <li>Se a frase fechar → você tem um <b>1:N</b>. Em qual tabela fica a chave estrangeira?</li>
+    <li>⚠️ O requisito diz: <i>"uma tarefa só pode pertencer a UMA categoria"</i> — sua modelagem precisa <b>impedir</b> o contrário. Que mecanismo do banco garante isso?</li>
+  </ul>
+
+  <h3><span class="n">2.3</span> Defina chaves</h3>
+  <ul class="plain">
+    <li>O que identifica <b>uniquamente</b> cada registro? <i>(PK — auto incremento? UUID?)</i></li>
+    <li>Que campo "aponta" para outra tabela? <i>(FK — o que acontece se apagar a categoria que tem tarefas? <code>ON DELETE</code> o quê?)</i></li>
+  </ul>
+
+  <h3><span class="n">2.4</span> Desenhe o Diagrama ER</h3>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Usar uma ferramenta: draw.io, dbdiagram.io, MySQL Workbench ou Mermaid</span></label>
+    <label class="chk"><input type="checkbox"><span>Incluir no diagrama: tabelas, colunas com tipos, PKs, FKs e cardinalidades</span></label>
+    <label class="chk"><input type="checkbox"><span>Autoteste: mostrar a alguém do grupo e perguntar "sem eu explicar nada, você entende que uma tarefa pertence a uma categoria?"</span></label>
+  </div>
+  <details><summary>📚 Onde estudar esta fase</summary><div class="inner">
+    <p>Conceitos de Entidade, Atributo, Relacionamento e Cardinalidade — capítulo de modelagem de qualquer livro de BD ou o material das semanas anteriores da disciplina.</p>
+  </div></details>
+</section>
+
+<!-- ============ FASE 3 ============ -->
+<section class="card" id="p3">
+  <h2>🏗️ <span class="ph">FASE 3</span> Script de Inicialização do Banco</h2>
+  <div class="badges"><span class="badge bg-blue">Set 30–Out 6</span><span class="badge bg-gold">Entregável: banco recriável do zero</span></div>
+  <p class="sub">Requisito: um <b>script</b> (ou JSON) que deixe o aplicativo num "estado inicial" — rodar num computador vazio deve criar tudo.</p>
+
+  <h3><span class="n">3.1</span> Aprenda o conceito de idempotência</h3>
+  <p>O enunciado pede: <i>"validando que elas não existam antes de sua criação"</i>. Pesquise na documentação do seu SGBD:</p>
+  <ul class="plain">
+    <li>🔍 Como criar um banco <b>somente se ele não existir</b>?</li>
+    <li>🔍 Como criar uma tabela <b>somente se ela não existir</b>?</li>
+    <li>🔍 Como inserir dados <b>somente se a tabela estiver vazia</b>? <i>(pesquise instruções condicionais de INSERT no seu SGBD)</i></li>
+  </ul>
+
+  <h3><span class="n">3.2</span> Estruture o script em blocos lógicos</h3>
+  <pre class="code"><span class="c">-- Ordem lógica recomendada (pense POR QUÊ a ordem importa):</span>
+1. Criar o banco
+2. Criar as tabelas  <span class="c">← em qual ordem, considerando as FKs? 🤔</span>
+3. Inserir dados de teste (categorias iniciais, tarefas exemplo)</pre>
+  <div class="callout c-reflex"><b>🤔 Reflexão</b>Se a tabela de tarefas referencia a de categorias, o que acontece se você criar as tarefas <b>primeiro</b>? Teste e observe o erro — é assim que se aprende integridade referencial!</div>
+
+  <h3><span class="n">3.3</span> Teste o script de forma destrutiva</h3>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Apagar o banco inteiro e rodar o script → tudo volta a funcionar?</span></label>
+    <label class="chk"><input type="checkbox"><span>Rodar o script <b>duas vezes seguidas</b> → dá erro ou é seguro?</span></label>
+    <label class="chk"><input type="checkbox"><span>Abrir o aplicativo logo após o script → já há dados de exemplo visíveis?</span></label>
+  </div>
+</section>
+
+<!-- ============ FASE 4 ============ -->
+<section class="card" id="p4">
+  <h2>🔌 <span class="ph">FASE 4</span> Conexão Aplicativo ↔ Banco</h2>
+  <div class="badges"><span class="badge bg-blue">Set 30–Out 6</span><span class="badge bg-gold">Entregável: app conectado ao banco</span></div>
+
+  <h3><span class="n">4.1</span> Encontre o driver certo</h3>
+  <ul class="plain">
+    <li>Busca: <code>"&lt;linguagem&gt; &lt;banco&gt; connector / driver / client library"</code></li>
+    <li>Verifique a <b>compatibilidade de versão</b> entre driver e servidor.</li>
+  </ul>
+
+  <h3><span class="n">4.2</span> Centralize a conexão</h3>
+  <ul class="plain">
+    <li>Onde ficam host, porta, usuário, senha e nome do banco? <i>(Sugestão: <b>um único arquivo de configuração</b> — nunca espalhado pelo código, nunca commitado com senha real!)</i></li>
+    <li>A função de conexão é <b>reutilizada</b> por todas as operações?</li>
+    <li>O que o app mostra se o banco estiver <b>desligado</b>? <i>(Teste! Isso será perguntado na defesa 😉)</i></li>
+  </ul>
+
+  <h3><span class="n">4.3</span> Feche as conexões</h3>
+  <ul class="plain">
+    <li>O que acontece se abrir 100 conexões sem fechar? Pesquise <b>vazamento de conexões</b>.</li>
+    <li>Sua linguagem tem gerenciador automático (<code>with</code>, <code>try-with-resources</code>, <code>using</code>)? Use-o.</li>
+  </ul>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Configuração em arquivo único (+ arquivo <code>.example</code> no Git)</span></label>
+    <label class="chk"><input type="checkbox"><span>Testado o comportamento com o banco desligado</span></label>
+    <label class="chk"><input type="checkbox"><span>Conexões fechadas/gerenciadas automaticamente</span></label>
+  </div>
+</section>
+
+<!-- ============ FASE 5 ============ -->
+<section class="card" id="p5">
+  <h2>🔄 <span class="ph">FASE 5</span> Implementação do CRUD</h2>
+  <div class="badges"><span class="badge bg-blue">Out 7–13</span><span class="badge bg-gold">Ordem recomendada: cada operação serve de base para a próxima</span></div>
+
+  <h3><span class="n">5.1</span> CREATE — adicionar tarefa</h3>
+  <ul class="plain">
+    <li>Quais campos são <b>obrigatórios</b>? O que acontece se o usuário der Enter sem digitar nada?</li>
+    <li>Onde a <b>validação</b> acontece: no CLI antes de enviar? No banco com constraints? <i>(Resposta ideal: nos dois — o enunciado cobra isso em "segurança".)</i></li>
+  </ul>
+
+  <h3><span class="n">5.2</span> READ — listar tarefas</h3>
+  <ul class="plain">
+    <li>Como listar <b>todas</b>? Por <b>categoria</b>? Por <b>status</b>?</li>
+    <li>Mostre um <b>ID</b> ao lado de cada linha — você vai precisar dele para editar/excluir!</li>
+  </ul>
+
+  <h3><span class="n">5.3</span> UPDATE — editar</h3>
+  <ul class="plain">
+    <li>Editar o quê: título? descrição? categoria? status?</li>
+    <li>O que acontece se o usuário digitar um ID que <b>não existe</b>?</li>
+  </ul>
+
+  <h3><span class="n">5.4</span> DELETE — eliminar</h3>
+  <ul class="plain">
+    <li>Confirmar com o usuário antes de apagar? <i>(Sim — usabilidade!)</i></li>
+    <li>Excluir <b>fisicamente</b> ou marcar como eliminado? O que o enunciado sugere? O que é mais simples de <b>defender</b>?</li>
+  </ul>
+
+  <div class="flow">
+    <span>entrada do usuário</span><i>→</i><span>validar</span><i>→</i><span>comando seguro</span><i>→</i><span>executar</span><i>→</i><span>confirmar</span><i>→</i><span>feedback no menu</span>
+  </div>
+  <div class="callout c-dica"><b>🧠 Padrão mental</b>Repita esse fluxo para as 4 operações. Se todas seguem o mesmo padrão, o código fica consistente e fácil de defender.</div>
+</section>
+
+<!-- ============ FASE 6 ============ -->
+<section class="card" id="p6">
+  <h2>🗂️ <span class="ph">FASE 6</span> Regras de Negócio: Categorias e Status</h2>
+  <div class="badges"><span class="badge bg-blue">Out 7–13</span><span class="badge bg-gold">Entregável: regras completas</span></div>
+
+  <h3><span class="n">6.1</span> Categoria padrão ("Geral")</h3>
+  <ul class="plain">
+    <li>A categoria "Geral" deve <b>existir no banco desde o script inicial</b>? Por quê?</li>
+    <li>Quem garante o valor padrão: o <b>aplicativo</b> (no INSERT) ou o <b>banco</b> (constraint <code>DEFAULT</code>)? Pesquise as duas formas e escolha com justificativa.</li>
+  </ul>
+  <div class="callout c-armadilha"><b>🔥 Armadilha da defesa</b>"E se o usuário <b>deletar a categoria Geral</b>?" O que seu sistema faz hoje? Decida e <b>proteja</b> isso.</div>
+
+  <h3><span class="n">6.2</span> CRUD de categorias</h3>
+  <ul class="plain">
+    <li>Categorias têm as mesmas 4 operações → o menu precisa de <b>uma seção só para elas</b>.</li>
+    <li>Excluir categoria com tarefas vinculadas: o banco deixa? <b>Teste!</b> Depois pesquise <code>RESTRICT</code>, <code>CASCADE</code> e <code>SET NULL</code> e decida conscientemente qual combina com o requisito.</li>
+  </ul>
+
+  <h3><span class="n">6.3</span> Status da tarefa</h3>
+  <ul class="plain">
+    <li>Como <b>limitar</b> os valores possíveis no banco? <i>(Pesquise: <code>ENUM</code>, <code>CHECK</code> ou tabela de apoio — depende do seu SGBD.)</i></li>
+    <li>Como o usuário <b>transita</b> um status? <i>(Menu → escolher tarefa → escolher novo status.)</i></li>
+    <li>"Marcar como concluída" é apenas um caso especial de mudança de status → pode ser um <b>atalho no menu</b>! 🎯</li>
+  </ul>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>"Geral" criada pelo script e protegida contra exclusão</span></label>
+    <label class="chk"><input type="checkbox"><span>CRUD de categorias acessível pelo menu</span></label>
+    <label class="chk"><input type="checkbox"><span>Status restrito aos valores do enunciado (Nova / Em andamento / Concluída / Pendente)</span></label>
+    <label class="chk"><input type="checkbox"><span>Atalho "marcar como concluída" funcionando</span></label>
+  </div>
+</section>
+
+<!-- ============ FASE 7 ============ -->
+<section class="card" id="p7">
+  <h2>🔐 <span class="ph">FASE 7</span> Segurança e Validação</h2>
+  <div class="badges"><span class="badge bg-blue">Out 14–18</span><span class="badge bg-gold">Requisito explícito do enunciado</span></div>
+
+  <h3><span class="n">7.1</span> Validação no console</h3>
+  <p>Para <b>cada campo</b> capturado, decida as regras <b>no papel antes de codificar</b> (elas virão na documentação):</p>
+  <ul class="plain">
+    <li>Texto da tarefa: pode ser vazio? Tamanho máximo?</li>
+    <li>Números (IDs): o que acontece se digitar <code>"abc"</code> onde se espera um número?</li>
+    <li>Datas: formato aceito? O que fazer quando o parse falha?</li>
+  </ul>
+
+  <h3><span class="n">7.2</span> Contra injeção</h3>
+  <div class="callout c-reflex"><b>🤔 Pergunta de estudo obrigatória</b>"O que acontece se o usuário digitar <b>aspas e palavras de SQL</b> no meio do título da tarefa?" Pesquise o termo <b>SQL injection</b> e descubra na documentação do seu driver o mecanismo seguro: <b>consultas parametrizadas / prepared statements</b>.</div>
+  <div class="callout c-atencao"><b>🎯 Atenção</b>Este é um dos pontos <b>mais cobrados</b> em defesa de projetos com banco de dados.</div>
+
+  <h3><span class="n">7.3</span> Criptografia</h3>
+  <ul class="plain">
+    <li>No TO-DO List, qual dado é sensível a ponto de precisar criptografia? <i>(Credenciais? Campo de anotações privadas?)</i></li>
+    <li>Pesquise: funções de <b>hash do próprio SGBD</b> e funções de criptografia da <b>linguagem</b>.</li>
+  </ul>
+  <div class="callout c-dica"><b>💡 Saiba explicar na defesa</b><b>Hash</b> = irreversível (senhas) · <b>Criptografia</b> = reversível (dados privados). A diferença cai em prova — e em defesa!</div>
+
+  <h3><span class="n">7.4</span> Credenciais</h3>
+  <ul class="plain">
+    <li>Nunca coloque a senha do banco <b>hardcoded</b> no código submetido.</li>
+    <li>Pesquise <b>variáveis de ambiente</b> ou arquivo de configuração (+ <code>.example</code> no repositório).</li>
+  </ul>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Regras de validação escritas para todos os campos</span></label>
+    <label class="chk"><input type="checkbox"><span>Consultas parametrizadas em TODAS as operações</span></label>
+    <label class="chk"><input type="checkbox"><span>Grupo sabe explicar hash vs. criptografia</span></label>
+    <label class="chk"><input type="checkbox"><span>Nenhuma senha real no repositório</span></label>
+  </div>
+</section>
+
+<!-- ============ FASE 8 ============ -->
+<section class="card" id="p8">
+  <h2>💻 <span class="ph">FASE 8</span> Interface CLI</h2>
+  <div class="badges"><span class="badge bg-blue">Out 14–18</span><span class="badge bg-gold">Menu enumerado (sugestão do enunciado)</span></div>
+
+  <h3><span class="n">8.1</span> Desenhe o menu <b>no papel</b> antes de codificar</h3>
+  <pre class="code"><span class="c">-- Estrutura sugerida (exemplo de esqueleto, adapte!):</span>
+1. Gerenciar tarefas
+2. Gerenciar categorias
+3. Sair</pre>
+  <div class="callout c-reflex"><b>🤔 Autoteste do menu</b>O usuário consegue chegar a <b>TODAS</b> as funcionalidades do enunciado a partir do menu? Faça a checagem item a item contra os requisitos.</div>
+
+  <h3><span class="n">8.2</span> O loop principal</h3>
+  <p>Todo CLI funciona num ciclo: <code>mostrar menu → ler opção → executar → repetir</code>. Pergunte-se: o que encerra o loop? O que acontece com uma opção <b>inválida</b> (digitar "9")? <i>Não pode quebrar o app!</i></p>
+
+  <h3><span class="n">8.3</span> Polimento de usabilidade</h3>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Mensagens claras de sucesso/erro após cada ação</span></label>
+    <label class="chk"><input type="checkbox"><span>Confirmação antes de excluir</span></label>
+    <label class="chk"><input type="checkbox"><span>Listagem organizada (colunas alinhadas, agrupada por categoria ou status)</span></label>
+  </div>
+</section>
+
+<!-- ============ FASE 9 ============ -->
+<section class="card" id="p9">
+  <h2>🧪 <span class="ph">FASE 9</span> Testes e Dados de Teste</h2>
+  <div class="badges"><span class="badge bg-blue">Out 14–18</span><span class="badge bg-gold">Anote os resultados — viram documentação</span></div>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Adicionar tarefa → fechar app → reabrir → tarefa continua lá? <b>(persistência — requisito explícito!)</b></span></label>
+    <label class="chk"><input type="checkbox"><span>Editar tarefa e verificar no banco pela ferramenta gráfica</span></label>
+    <label class="chk"><input type="checkbox"><span>Excluir tarefa e confirmar que sumiu</span></label>
+    <label class="chk"><input type="checkbox"><span>Criar tarefa <b>sem categoria</b> → recebeu "Geral"?</span></label>
+    <label class="chk"><input type="checkbox"><span>Criar, editar e excluir categorias</span></label>
+    <label class="chk"><input type="checkbox"><span>Tentar excluir categoria com tarefas vinculadas → comportamento escolhido funcionou?</span></label>
+    <label class="chk"><input type="checkbox"><span>Mudar status / marcar como concluída → persistiu?</span></label>
+    <label class="chk"><input type="checkbox"><span>Digitar entradas inválidas em todos os campos → app nunca quebra?</span></label>
+    <label class="chk"><input type="checkbox"><span>Banco desligado → app mostra mensagem amigável?</span></label>
+  </div>
+  <div class="callout c-dica"><b>📦 Dados de teste</b>Devem ser gerados pelo <b>script de inicialização da Fase 3</b> — assim a entrega já vem "populada".</div>
+</section>
+
+<!-- ============ FASE 10 ============ -->
+<section class="card" id="p10">
+  <h2>📝 <span class="ph">FASE 10</span> Documentação (a parte que vale nota!)</h2>
+  <div class="badges"><span class="badge bg-blue">Out 19–21</span><span class="badge bg-gold">3 blocos exigidos pelo enunciado</span></div>
+
+  <h3><span class="n">10.1</span> "Como funciona"</h3>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Stack escolhida + <b>justificativa</b></span></label>
+    <label class="chk"><input type="checkbox"><span>Passo a passo do setup: do zero até rodar (dependências, banco, script)</span></label>
+    <label class="chk"><input type="checkbox"><span>Como executar o app + mapa do menu <b>com capturas de tela</b></span></label>
+    <label class="chk"><input type="checkbox"><span>Diagrama ER embutido + explicação de cada tabela e relacionamento</span></label>
+  </div>
+
+  <h3><span class="n">10.2</span> "Principais ações no banco de dados"</h3>
+  <p>Descreva cada operação — modelo de tabela a preencher:</p>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>Funcionalidade</th><th>Operação</th><th>Tabela(s)</th><th>Observação</th></tr>
+    <tr><td>Adicionar tarefa</td><td>?</td><td>?</td><td>?</td></tr>
+    <tr><td>Listar por categoria</td><td>SELECT + ?</td><td>?</td><td>?</td></tr>
+    <tr><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+  </table></div>
+  <ul class="plain">
+    <li>Se usaram <b>funções, procedures, triggers ou views</b> → documentem cada uma com o propósito;</li>
+    <li>Se não usaram, reavaliem: o enunciado menciona esses elementos — usar em pelo menos um ponto agrega valor. <i>(Uma view de "tarefas por categoria"? 🤔 Decidam e justifiquem.)</i></li>
+  </ul>
+
+  <h3><span class="n">10.3</span> Decisões e justificativas</h3>
+  <p>Documentação boa = <b>pares pergunta→resposta</b> que o instrutor fará na defesa: por que esse banco? Por que esse relacionamento? Por que <code>CASCADE</code>/<code>RESTRICT</code>? Por que esse mecanismo de segurança?</p>
+</section>
+
+<!-- ============ FASE 11 ============ -->
+<section class="card" id="p11">
+  <h2>🎤 <span class="ph">FASE 11</span> Preparação para a Defesa (Semana 8)</h2>
+  <div class="badges"><span class="badge bg-blue">Semana 8</span><span class="badge bg-gold">Regra de ouro: qualquer membro defende qualquer área</span></div>
+
+  <h3><span class="n">11.1</span> Rotação de conhecimento</h3>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Sessões internas: cada membro explica uma fase (modelo, script, CRUD, segurança, CLI) para os outros</span></label>
+    <label class="chk"><input type="checkbox"><span>Perguntas duras simuladas: "por que essa chave estrangeira?" · "como vocês evitam SQL injection?" · "o que acontece se eu rodar o script duas vezes?"</span></label>
+    <label class="chk"><input type="checkbox"><span>Demonstração da persistência: fechar e reabrir o app ao vivo</span></label>
+  </div>
+
+  <h3><span class="n">11.2</span> Checklist da demonstração ao vivo</h3>
+  <div class="chklist">
+    <label class="chk"><input type="checkbox"><span>Ambiente do apresentador testado no dia (banco rodando, script executável)</span></label>
+    <label class="chk"><input type="checkbox"><span>Plano B: vídeo curto da demonstração gravado</span></label>
+    <label class="chk"><input type="checkbox"><span>Roteiro da demo: script → abrir app → adicionar → editar → status → categorias → excluir → fechar/abrir (persistência) → ferramenta gráfica mostrando os dados</span></label>
+    <label class="chk"><input type="checkbox"><span>Arquivos completos para envio antecipado: código, banco com dados de teste, diagrama ER, documentação</span></label>
+  </div>
+</section>
+
+<!-- ============ ERROS COMUNS ============ -->
+<section class="card" id="erros">
+  <h2>🚨 <span class="ph">ALERTA</span> Erros Comuns (Evite!)</h2>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>❌ Erro</th><th>✅ Prevenção</th></tr>
+    <tr><td>Diagrama ER feito <b>depois</b> do código</td><td>Modele primeiro — o código nasce do diagrama (Fase 2)</td></tr>
+    <tr><td>Script quebra se rodado 2×</td><td>Idempotência (Fase 3.3)</td></tr>
+    <tr><td>Senha do banco commitada no Git</td><td>Arquivo de configuração + <code>.example</code> (Fase 4.2 / 7.4)</td></tr>
+    <tr><td>Concatenação de strings em SQL</td><td>Prepared statements (Fase 7.2)</td></tr>
+    <tr><td>Dados somem ao fechar o app</td><td>Teste de persistência (Fase 9)</td></tr>
+    <tr><td>Só um membro entende o código</td><td>Rotação de conhecimento (Fase 11.1)</td></tr>
+    <tr><td>Documentação sem screenshots</td><td>Capture a tela a cada funcionalidade pronta</td></tr>
+    <tr><td>Deixar documentação para a última noite</td><td>Escreva <b>enquanto</b> desenvolve (Fase 10)</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ CHECKLIST FINAL ============ -->
+<section class="card" id="final">
+  <h2>✅ <span class="ph">ENTREGA</span> Checklist Final (antes de 21 out, 22:59)</h2>
+  <p class="sub">Confira item a item antes de enviar na plataforma.</p>
+  <div class="chklist big-final">
+    <label class="chk"><input type="checkbox"><span>📄 Código-fonte no repositório, comentado, rodando do zero</span></label>
+    <label class="chk"><input type="checkbox"><span>🏗️ Script de inicialização idempotente com dados de teste</span></label>
+    <label class="chk"><input type="checkbox"><span>💾 Banco populado e persistência demonstrada</span></label>
+    <label class="chk"><input type="checkbox"><span>🗺️ Diagrama ER (relacional) <b>ou</b> dicionário de dados (não relacional)</span></label>
+    <label class="chk"><input type="checkbox"><span>🔄 CRUD completo de tarefas <b>e</b> categorias</span></label>
+    <label class="chk"><input type="checkbox"><span>🗂️ Categoria padrão "Geral" protegida</span></label>
+    <label class="chk"><input type="checkbox"><span>📊 Status funcionando + marcar como concluída</span></label>
+    <label class="chk"><input type="checkbox"><span>🔐 Validações em todos os campos + consultas parametrizadas</span></label>
+    <label class="chk"><input type="checkbox"><span>💻 CLI com menu enumerado completo</span></label>
+    <label class="chk"><input type="checkbox"><span>📝 Documentação: setup, funcionamento, ações no banco, decisões</span></label>
+    <label class="chk"><input type="checkbox"><span>🎤 Grupo ensaiou a defesa com perguntas simuladas</span></label>
+    <label class="chk"><input type="checkbox"><span>☑️ Declarado o cumprimento da Política de Honestidade Acadêmica</span></label>
+  </div>
+  <div class="callout c-ondeest"><b>💙 Lembrete final</b>Este roteiro existe para que <b>vocês</b> construam e <b>defendam</b> o projeto. Cada pergunta "🤔" é um possível questionamento do instrutor — se o grupo souber responder a todas, está pronto para os 160 pontos. Bons estudos! 🚀</div>
+</section>
+
+</main>
+</div>
+
+<div class="fab">
+  <button class="pr" id="fabPrint" title="Imprimir / PDF">🖨️</button>
+  <button class="up" id="fabTop" title="Voltar ao topo">↑</button>
+</div>
+
+<footer>
+  <b>Tutorial Guia — Desenvolvimento de TO-DO List com integração de banco de dados (Avaliação Final · 160 pts)</b><br>
+  Material de apoio metodológico, apenas para uso acadêmico. É proibido distribuí-lo ou publicá-lo sem autorização prévia por escrito.<br>
+  © 2026 Universidade Jala | Todos os direitos são reservados. · Ao enviar a tarefa, reconheço não violar a Política de Honestidade Acadêmica nem a Política de Uso de IA Generativa.
+</footer>
+
+<script>
+/* ===== NAV ===== */
+const SECTIONS=[
+ ["p0","🚀","Início"],["pCron","🗓️","Cronograma"],
+ ["p1","🧭","Fase 1 · Stack"],["p2","🗺️","Fase 2 · Modelagem"],
+ ["p3","🏗️","Fase 3 · Script inicial"],["p4","🔌","Fase 4 · Conexão"],
+ ["p5","🔄","Fase 5 · CRUD"],["p6","🗂️","Fase 6 · Categorias/Status"],
+ ["p7","🔐","Fase 7 · Segurança"],["p8","💻","Fase 8 · CLI"],
+ ["p9","🧪","Fase 9 · Testes"],["p10","📝","Fase 10 · Documentação"],
+ ["p11","🎤","Fase 11 · Defesa"],["erros","🚨","Erros comuns"],["final","✅","Checklist final"]
+];
+const nav=$("nav");
+SECTIONS.forEach(([id,ic,tx])=>{
+  const a=document.createElement("a");a.className="navlink";a.href="#"+id;a.dataset.for=id;
+  a.innerHTML=`<span>${ic}</span><span>${tx}</span><span class="done" style="display:none">✓</span>`;nav.appendChild(a);
+});
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+
+/* ===== PROGRESSO ===== */
+const KEY="todoTutorialProgress";
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
+const boxes=$$("main input[type=checkbox]");
+boxes.forEach((b,i)=>{
+  b.checked=!!saved[i];
+  b.addEventListener("change",()=>{saved[i]=b.checked;localStorage.setItem(KEY,JSON.stringify(saved));refresh()});
+});
+function refresh(){
+  boxes.forEach((b,i)=>b.checked=!!saved[i]);
+  const total=boxes.length;let done=0;
+  SECTIONS.forEach(([id])=>{
+    const sec=document.getElementById(id);if(!sec)return;
+    const cb=sec.querySelectorAll("input[type=checkbox]");
+    const ok=cb.length&&[...cb].every(c=>c.checked);
+    const link=nav.querySelector(`[data-for="${id}"] .done`);
+    if(link)link.style.display=ok?"inline":"none";
+    done+=[...cb].filter(c=>c.checked).length;
+  });
+  const pct=total?Math.round(done/total*100):0;
+  $("#miniBar").style.width=pct+"%";$("#miniTxt").textContent=pct+"%";
+  $("#sideBar").style.width=pct+"%";
+  $("#sideTxt").textContent=`${done} de ${total} etapas concluídas`;
+  if(pct===100)confetti();
+}
+function confetti(){const c=document.createElement("div");
+  c.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:99";
+  const cols=["#2196f3","#00b0ff","#ffb300","#22c55e"];
+  for(let i=0;i<70;i++){const d=document.createElement("i");
+    d.style.cssText=`position:absolute;top:-12px;left:${Math.random()*100}%;width:8px;height:12px;border-radius:3px;background:${cols[i%4]};animation:f ${2+Math.random()*2}s linear forwards`;
+    c.appendChild(d)}
+  const st=document.createElement("style");st.textContent="@keyframes f{to{transform:translateY(105vh) rotate(720deg)}}";
+  document.head.appendChild(st);document.body.appendChild(c);
+  setTimeout(()=>{c.remove();st.remove()},4800)}
+
+/* ===== NAVEGAÇÃO ATIVA ===== */
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){
+    nav.querySelectorAll(".navlink").forEach(a=>a.classList.toggle("active",a.dataset.for===e.target.id))}})
+},{rootMargin:"-20% 0px -70% 0px"});
+SECTIONS.forEach(([id])=>{const s=document.getElementById(id);if(s)io.observe(s)});
+
+/* ===== BUSCA ===== */
+ $("#search").addEventListener("input",e=>{
+  const q=e.target.value.toLowerCase();
+  nav.querySelectorAll(".navlink").forEach(a=>{
+    a.style.display=a.textContent.toLowerCase().includes(q)?"flex":"none"})});
+
+/* ===== UI ===== */
+ $("#menuBtn").onclick=()=>$("#sidebar").classList.toggle("open");
+document.addEventListener("click",e=>{
+  if(window.innerWidth<=900&&!$("#sidebar").contains(e.target)&&e.target!==$("#menuBtn"))
+    $("#sidebar").classList.remove("open")});
+const doPrint=()=>window.print();
+ $("#btnPrint").onclick=doPrint;$("#fabPrint").onclick=doPrint;
+ $("#fabTop").onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
+ $("#btnReset").onclick=()=>{if(confirm("Zerar todo o progresso dos checklists?")){saved={};localStorage.removeItem(KEY);refresh()}};
+refresh();
+</script>
+</body>
+</html>
