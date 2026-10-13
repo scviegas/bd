@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Simulador de Backups — SQL &amp; NoSQL</title>
+<style>
+  :root{
+    --azul:#0a4bbf; --azul-esc:#083a94; --azul-claro:#e8f0ff; --ciano:#00b4d8;
+    --texto:#1c2333; --cinza:#66707f; --verde:#0f9d58; --vermelho:#d93025;
+    --amarelo:#f9ab00; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif}
+  body{background:#f2f5fb;color:var(--texto);min-height:100vh}
+  header{background:linear-gradient(120deg,#0a4bbf 0%,#0d5ae0 55%,#083a94 100%);color:#fff;padding:16px 22px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(10,40,120,.25)}
+  .head-inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between}
+  .brand{font-size:1.15rem;font-weight:700}
+  .brand span{display:block;font-weight:400;font-size:.8rem;opacity:.85}
+  nav{display:flex;gap:8px;flex-wrap:wrap}
+  nav button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;padding:9px 16px;border-radius:999px;cursor:pointer;font-size:.9rem;transition:.2s}
+  nav button:hover{background:rgba(255,255,255,.3)}
+  nav button.ativo{background:#fff;color:var(--azul-esc);font-weight:600}
+  main{max-width:1000px;margin:24px auto 60px;padding:0 16px}
+  .card{background:#fff;border-radius:var(--radius);padding:26px;box-shadow:0 4px 18px rgba(20,40,90,.08);margin-bottom:16px}
+  h1{font-size:1.5rem;color:var(--azul-esc);margin-bottom:6px}
+  h2{font-size:1.15rem;color:var(--azul-esc);margin-bottom:12px}
+  .sub{color:var(--cinza);font-size:.95rem;margin-bottom:18px}
+  .progress{height:8px;background:#e3e9f5;border-radius:99px;overflow:hidden;margin:14px 0 20px}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--ciano),var(--azul));border-radius:99px;transition:width .3s}
+  .q-title{font-size:1.25rem;font-weight:700;margin-bottom:16px}
+  .opts{display:grid;gap:10px}
+  .opt{text-align:left;background:var(--azul-claro);border:2px solid #cfdefa;border-radius:12px;padding:14px 16px;font-size:.98rem;cursor:pointer;transition:.15s;color:var(--texto)}
+  .opt:hover{border-color:var(--azul);transform:translateY(-1px)}
+  .opt.sel{border-color:var(--azul);background:#dbe8ff;font-weight:600}
+  .opt.correta{border-color:var(--verde);background:#e6f6ec}
+  .opt.errada{border-color:var(--vermelho);background:#fdeaea}
+  .opt:disabled{cursor:default;opacity:.92}
+  .btn{display:inline-block;background:linear-gradient(120deg,var(--azul),#0d5ae0);color:#fff;border:none;border-radius:999px;padding:12px 28px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.ghost{background:#fff;color:var(--azul-esc);border:2px solid var(--azul)}
+  .btn-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .banner{border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:.95rem;line-height:1.5}
+  .banner.info{background:#e7f2ff;border-left:5px solid var(--azul)}
+  .banner.warn{background:#fff6e0;border-left:5px solid var(--amarelo)}
+  .banner.tip{background:#e9f8ef;border-left:5px solid var(--verde)}
+  .plan-item{display:flex;gap:14px;align-items:flex-start;background:var(--azul-claro);border:1px solid #cfdefa;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+  .plan-ico{font-size:1.6rem;line-height:1.2}
+  .plan-body b{display:block;font-size:1.02rem;color:var(--azul-esc)}
+  .freq{display:inline-block;background:var(--azul);color:#fff;font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:99px;margin:4px 0 6px;text-transform:uppercase;letter-spacing:.4px}
+  .plan-body p{font-size:.92rem;color:#3d475c;line-height:1.5}
+  ul.razoes{padding-left:20px;line-height:1.7;font-size:.95rem}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .ref-card{background:#fff;border:1px solid #dde4f0;border-top:5px solid var(--azul);border-radius:12px;padding:18px;box-shadow:0 3px 10px rgba(20,40,90,.06)}
+  .ref-card h3{color:var(--azul-esc);font-size:1.02rem;margin-bottom:6px}
+  .ref-card p{font-size:.9rem;color:#3d475c;line-height:1.55;margin-bottom:8px}
+  .ref-card .tag{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .ok{color:var(--verde)} .ruim{color:var(--vermelho)}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:10px}
+  th,td{padding:10px 12px;border-bottom:1px solid #e3e9f5;text-align:left;vertical-align:top}
+  th{background:var(--azul-claro);color:var(--azul-esc)}
+  .exp{background:#f4f7fd;border-left:5px solid var(--ciano);border-radius:10px;padding:14px 16px;margin-top:14px;font-size:.93rem;line-height:1.55}
+  .score-big{font-size:2.6rem;font-weight:800;color:var(--azul-esc);text-align:center;margin:8px 0}
+  .pill{display:inline-block;background:var(--azul-claro);border:1px solid #cfdefa;color:var(--azul-esc);border-radius:99px;padding:5px 14px;font-size:.85rem;margin:4px 4px 0 0;font-weight:600}
+  footer{text-align:center;color:var(--cinza);font-size:.82rem;padding:18px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <div class="brand">💾 Simulador de Backups<span>SQL &amp; NoSQL · Semana #7 · Universidade Jala</span></div>
+    <nav>
+      <button data-tab="sim" class="ativo">🎯 Simulador de Escolha</button>
+      <button data-tab="quiz">📝 Quiz</button>
+      <button data-tab="ref">📚 Referência</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="tab-sim"><div id="wizard" class="card"></div></section>
+  <section id="tab-quiz" class="hidden"><div id="quizBox" class="card"></div></section>
+  <section id="tab-ref" class="hidden"><div id="refBox"></div></section>
+</main>
+
+<footer>Baseado no material "Backups" — Semana #7 · Universidade Jala (uso acadêmico).</footer>
+
+<script>
+/* ================== DADOS: PERGUNTAS DO WIZARD ================== */
+const QUESTIONS=[
+ {id:'systemType',t:'Qual tipo de sistema será protegido?',o:[
+   ['banco','🏦 Sistema bancário / financeiro'],
+   ['social','🌐 Rede social'],
+   ['ecommerce','🛒 E-commerce'],
+   ['interno','🏢 Sistema interno / corporativo'],
+   ['iot','📡 IoT / Big Data / Telemetria']]},
+ {id:'dbType',t:'Qual banco de dados é utilizado (ou pretendido)?',o:[
+   ['sql','SQL / RDBMS — MySQL, PostgreSQL, SQL Server, Oracle...'],
+   ['nosql','NoSQL — MongoDB, Cassandra, DynamoDB, Redis...'],
+   ['auto','🤔 Ainda não decidi — recomende para mim']]},
+ {id:'availability',t:'O sistema precisa estar disponível 24/7, sem interrupções?',o:[
+   ['247','✅ Sim, é crítico — nunca pode parar'],
+   ['janela','🕗 Não — posso ter janelas de manutenção']]},
+ {id:'dataLoss',t:'Qual a tolerância à perda de dados?',o:[
+   ['zero','0️⃣ Zero — nenhuma transação pode ser perdida'],
+   ['minima','⏱️ Mínima — no máximo alguns minutos'],
+   ['moderada','📅 Moderada — posso perder alterações recentes do dia']]},
+ {id:'changeFreq',t:'Com que frequência os dados mudam?',o:[
+   ['muitoAlta','🔥 Muito alta — milhares de alterações por hora'],
+   ['alta','⚡ Alta — centenas de alterações por hora'],
+   ['baixa','🐢 Média/baixa — poucas alterações por dia']]},
+ {id:'storage',t:'O espaço de armazenamento para backups é limitado?',o:[
+   ['sim','Sim, é um recurso escasso'],
+   ['nao','Não, temos espaço suficiente']]},
+ {id:'priority',t:'O que é mais importante na restauração?',o:[
+   ['ponto','🎯 Recuperar um ponto exato no tempo'],
+   ['simples','⚡ Velocidade e simplicidade'],
+   ['economia','💾 Economia de espaço']]}
+];
+
+/* ================== MOTOR DE REGRAS (baseado no PDF) ================== */
+function decideDbType(a){
+  if(a.dbType!=='auto') return a.dbType;
+  if(a.systemType==='banco'||a.systemType==='ecommerce') return 'sql';
+  if(a.systemType==='social'||a.systemType==='iot') return 'nosql';
+  return 'sql';
+}
+function dbRecommendation(a){
+  if(a.systemType==='banco') return {t:'SQL (RDBMS)',w:'Sistemas bancários exigem consistência transacional. O material observa que o NoSQL "nem sempre oferece suporte a transações ACID (Atomicidade, Consistência, Isolamento, Durabilidade)" — portanto o RDBMS é o mais indicado, além de dar acesso ao backup de registros de transações.'};
+  if(a.systemType==='social') return {t:'NoSQL',w:'Redes sociais têm enorme volume e precisam de alta disponibilidade. No material, as réplicas NoSQL servem para "melhorar a disponibilidade, escalabilidade e tolerância a falhas no sistema".'};
+  if(a.systemType==='ecommerce') return {t:'SQL (RDBMS)',w:'Pedidos e pagamentos exigem transações consistentes (ACID), típicas de RDBMS.'};
+  if(a.systemType==='iot') return {t:'NoSQL',w:'Telemetria/Big Data gera grande volume de dados semiestruturados; NoSQL escala horizontalmente com réplicas e snapshots.'};
+  return {t:'SQL (RDBMS)',w:'Dados estruturados e relacionais típicos de sistemas corporativos se encaixam bem em RDBMS. Considere NoSQL se os dados forem flexíveis/semiestruturados e o foco for disponibilidade.'};
+}
+function buildSqlPlan(a){
+  const p=[];
+  p.push({i:'📦',n:'Backup Completo (Full)',f:'Semanal',w:'Base de toda a estratégia: copia todos os dados e objetos (tabelas, views, procedimentos armazenados e funções) num momento específico, garantindo que "nenhum dado será perdido em caso de algum problema".'});
+  if(a.storage==='sim' && (a.changeFreq==='muitoAlta'||a.changeFreq==='alta')){
+    p.push({i:'➕',n:'Backup Incremental',f:'Diário',w:'Com armazenamento limitado e muitas alterações, o incremental é ideal: salva apenas as mudanças desde o último backup, "o que normalmente significa menos dados para backup".'});
+  }else{
+    p.push({i:'🔀',n:'Backup Diferencial',f:'Diário',w:'Salva as alterações desde o ÚLTIMO BACKUP COMPLETO. A restauração é rápida: basta o último completo + o último diferencial.'});
+  }
+  if(a.dataLoss==='zero'||a.priority==='ponto'){
+    p.push({i:'📜',n:'Backup de Registros de Transações',f:'A cada 15–30 min',w:'Registra todas as operações (inserções, atualizações, exclusões) e permite "recuperação do banco de dados para um ponto específico no tempo" — essencial para tolerância zero à perda.'});
+  }
+  if(a.availability==='247'){
+    p.push({i:'🔥',n:'Hot Backup',f:'Contínuo (online)',w:'Como o sistema é 24/7, o backup é executado "enquanto o banco de dados está em execução e acessível aos usuários", sem interromper o serviço. Verifique se o SGBD oferece suporte nativo.'});
+  }else{
+    p.push({i:'❄️',n:'Backup a Frio (Cold) — opcional',f:'Na janela de manutenção',w:'Havendo janela disponível, o backup pode ser feito com o banco desligado e inacessível, consumindo menos recursos.'});
+  }
+  return p;
+}
+function buildNoSqlPlan(a){
+  const p=[];
+  if(a.availability==='247'||a.systemType==='social'||a.dataLoss==='zero'){
+    p.push({i:'🔁',n:'Réplica (Replicação)',f:'Contínua',w:'Cria cópias dos dados distribuídas em diferentes nós/servidores para "melhorar a disponibilidade, escalabilidade e tolerância a falhas" — protegendo inclusive contra queda de um nó.'});
+  }
+  p.push({i:'📸',n:'Snapshot (Instantâneo)',f:(a.dataLoss==='zero'?'A cada 1h':'Diário'),w:'Captura um instantâneo no tempo dos dados. Como o NoSQL nem sempre suporta transações ACID, o snapshot é a principal cópia pontual consistente. Com tolerância zero, aumente a frequência.'});
+  if(a.systemType==='iot'||a.changeFreq==='muitoAlta'||a.priority==='ponto'){
+    p.push({i:'🧰',n:'Ferramentas de Backup de Terceiros',f:'Conforme política',w:'Para grandes volumes e necessidades avançadas (agendamento, criptografia, retenção), use ferramentas especializadas de backup para o seu NoSQL.'});
+  }
+  p.push({i:'📤',n:'Exportação e Importação de Dados',f:'Semanal (arquivo)',w:'Exportar dados (ex.: MongoDB → CSV/JSON) serve como cópia de arquivo de longo prazo e facilita migração entre sistemas.'});
+  return p;
+}
+function restoreSteps(db,plan){
+  if(db==='sql'){
+    const inc=plan.some(x=>x.n.includes('Incremental'));
+    const log=plan.some(x=>x.n.includes('Transações'));
+    const s=['1️⃣ Restaure o último backup completo.'];
+    if(inc) s.push('2️⃣ Aplique cada backup incremental EM ORDEM, do mais antigo ao mais recente.');
+    else s.push('2️⃣ Aplique o último backup diferencial (apenas 1).');
+    if(log) s.push('3️⃣ Aplique os backups de registros de transações até o ponto exato desejado (point-in-time).');
+    s.push('✔️ Valide a integridade e reative o acesso dos usuários.');
+    return s;
+  }
+  return ['1️⃣ Restaure o snapshot mais recente no cluster.',
+          '2️⃣ Em caso de falha de um nó, promova uma réplica a primário (sem restaurar do zero).',
+          '3️⃣ Para dados históricos, importe de exportações (CSV/JSON).',
+          '✔️ Verifique a consistência e monitore a ressincronização das réplicas.'];
+}
+function buildSchedule(db,plan){
+  if(db==='sql'){
+    const inc=plan.some(x=>x.n.includes('Incremental'));
+    const log=plan.some(x=>x.n.includes('Transações'));
+    const hot=plan.some(x=>x.n.includes('Hot'));
+    let s='📅 Domingo 02h → Completo · Diariamente 03h → '+(inc?'Incremental':'Diferencial');
+    if(log) s+=' · A cada 15–30 min → Logs de transação';
+    if(hot) s+=' · Sempre online → Hot Backup';
+    return s;
+  }
+  return '📅 Replicação contínua para 2+ nós · Snapshot diário 03h · Exportação semanal para arquivo';
+}
+
+/* ================== WIZARD ================== */
+let state={step:-1,answers:{}};
+function renderWizard(){
+  const el=document.getElementById('wizard');
+  if(state.step===-1){
+    el.innerHTML='<h1>🎯 Simulador de Escolha de Backups</h1>'+
+    '<p class="sub">Responda 7 perguntas e receba o plano de backup recomendado, com as justificativas baseadas nas regras do material (RDBMS e NoSQL).</p>'+
+    '<div class="banner info">O simulador avalia: tipo de sistema, banco de dados (SQL/NoSQL), disponibilidade 24/7, tolerância à perda de dados, frequência de alteração, armazenamento e prioridade de restauração.</div>'+
+    '<button class="btn" onclick="state.step=0;renderWizard()">Começar ▶</button>';
+    return;
+  }
+  if(state.step<QUESTIONS.length){
+    const q=QUESTIONS[state.step];
+    let h='<div class="progress"><i style="width:'+(state.step/QUESTIONS.length*100)+'%"></i></div>'+
+      '<p class="sub">Pergunta '+(state.step+1)+' de '+QUESTIONS.length+'</p>'+
+      '<div class="q-title">'+q.t+'</div><div class="opts">';
+    q.o.forEach(function(op){
+      h+='<button class="opt'+(state.answers[q.id]===op[0]?' sel':'')+'" onclick="answer(\''+q.id+'\',\''+op[0]+'\')">'+op[1]+'</button>';
+    });
+    h+='</div><div class="btn-row">'+(state.step>0?'<button class="btn ghost" onclick="state.step--;renderWizard()">◀ Voltar</button>':'')+'</div>';
+    el.innerHTML=h;
+    return;
+  }
+  renderResult();
+}
+function answer(id,val){ state.answers[id]=val; state.step++; renderWizard(); }
+
+function renderResult(){
+  const a=state.answers, el=document.getElementById('wizard');
+  const db=decideDbType(a);
+  const plan=db==='sql'?buildSqlPlan(a):buildNoSqlPlan(a);
+  const dbRec=a.dbType==='auto'?dbRecommendation(a):null;
+  let h='<div class="progress"><i style="width:100%"></i></div><h1>✅ Plano de Backup Recomendado</h1>';
+  if(dbRec) h+='<div class="banner tip"><b>🏛️ Banco de dados recomendado: '+dbRec.t+'</b><br>'+dbRec.w+'</div>';
+  if(db==='nosql'&&(a.systemType==='banco'||a.systemType==='ecommerce'))
+    h+='<div class="banner warn">⚠️ <b>Atenção:</b> sistemas bancários/de pagamentos normalmente exigem transações ACID, que o NoSQL "nem sempre oferece suporte". Avalie seriamente um RDBMS.</div>';
+  if(db==='sql'&&a.systemType==='social')
+    h+='<div class="banner info">💡 SQL funciona, mas para redes sociais de grande escala um NoSQL com <b>réplicas</b> costuma escalar melhor em disponibilidade e volume.</div>';
+  if(a.systemType==='banco')
+    h+='<div class="banner tip">💡 <b>Atividade do material:</b> para o sistema bancário a combinação clássica é <b>Completo + Diferencial + Registros de Transações</b> (+ Hot Backup se 24/7) — recuperação ponto-a-ponto e zero perda.</div>';
+  if(a.systemType==='social')
+    h+='<div class="banner tip">💡 <b>Atividade do material:</b> para a rede social a estratégia típica é NoSQL com <b>Réplica + Snapshot</b> (e ferramentas de terceiros na escala necessária) — disponibilidade, escalabilidade e tolerância a falhas.</div>';
+  h+='<h2>🧩 Estratégia escolhida ('+(db==='sql'?'RDBMS / SQL':'NoSQL')+')</h2>';
+  plan.forEach(function(p){
+    h+='<div class="plan-item"><div class="plan-ico">'+p.i+'</div><div class="plan-body"><b>'+p.n+'</b><span class="freq">'+p.f+'</span><p>'+p.w+'</p></div></div>';
+  });
+  h+='<div class="banner info"><b>Agendamento sugerido:</b> '+buildSchedule(db,plan)+'</div>';
+  h+='<h2>🔄 Como restaurar</h2><ul class="razoes">'+restoreSteps(db,plan).map(function(s){return '<li>'+s+'</li>';}).join('')+'</ul>';
+  h+='<div class="btn-row"><button class="btn ghost" onclick="state={step:-1,answers:{}};renderWizard()">🔄 Refazer simulação</button>'+
+     '<button class="btn" onclick="showTab(\'quiz\')">📝 Testar conhecimento no Quiz</button></div>';
+  el.innerHTML=h;
+}
+
+/* ================== QUIZ ================== */
+const QUIZ=[
+ {tp:'Full Backup',q:'O que inclui um "backup completo" (full backup)?',o:['Apenas as tabelas mais importantes','Todos os dados e objetos: tabelas, views, procedimentos armazenados e funções','Apenas as alterações desde o último backup','Somente os registros de transações'],a:1,ex:'O material define: "cópia de todos os dados e objetos armazenados... inclui todas as tabelas, views, procedimentos armazenados, funções e qualquer outra coisa que faça parte do banco de dados".'},
+ {tp:'Diferencial',q:'Um backup diferencial salva as alterações feitas desde:',o:['O último backup, de qualquer tipo','O último backup completo','O início do banco de dados','O último backup diferencial'],a:1,ex:'Diferencial = alterações desde o ÚLTIMO BACKUP COMPLETO. Já o incremental considera o último backup de qualquer tipo.'},
+ {tp:'Incremental',q:'Um backup incremental salva as alterações desde:',o:['O último backup, completo ou incremental','O último backup completo, apenas','O último backup diferencial','Sempre as últimas 24 horas'],a:0,ex:'"O backup incremental salva apenas as alterações desde o último backup, independentemente de ter sido completo ou incremental".'},
+ {tp:'Registros de Transações',q:'Qual tipo de backup permite restaurar o banco para um ponto específico no tempo?',o:['Completo','Diferencial','Backup de registros de transações','Snapshot'],a:2,ex:'"Seu principal objetivo é permitir a recuperação do banco de dados para um ponto específico no tempo, usando os registros de transações salvos".'},
+ {tp:'Hot Backup',q:'Backup executado enquanto o banco de dados está em execução e acessível aos usuários:',o:['Cold backup','Hot backup','Backup incremental','Snapshot'],a:1,ex:'Hot backup roda com o banco ativo; o cold backup é feito com o banco "desligado e inacessível".'},
+ {tp:'Incremental',q:'Qual é uma vantagem do backup incremental?',o:['Restauração mais rápida que o diferencial','Ocupa menos espaço de armazenamento','Não depende de backups anteriores','Garante transações ACID'],a:1,ex:'"Ocupa menos espaço de armazenamento do que os backups completos ou diferenciais" — mas a restauração é mais complexa e sequencial.'},
+ {tp:'Diferencial',q:'Qual é o risco do backup diferencial?',o:['Ocupa mais espaço que o completo','Depende do último backup completo — se corrompido, a recuperação pode ser impossível','Não pode ser agendado','Só funciona em NoSQL'],a:1,ex:'"Se o backup completo não estiver disponível ou estiver corrompido, a recuperação pode ser mais difícil ou até mesmo impossível".'},
+ {tp:'Incremental',q:'Para restaurar de backups incrementais, é necessário:',o:['Apenas o último incremental','Restaurar todos os backups em ordem, do último completo ao último incremental','Apenas o primeiro backup completo','Recriar o banco manualmente'],a:1,ex:'"Todos os backups feitos devem ser restaurados em ordem, desde o último backup completo até o último backup incremental".'},
+ {tp:'Snapshot',q:'No NoSQL, um "snapshot" refere-se a:',o:['Uma cópia distribuída em vários nós','Um instantâneo no tempo dos dados armazenados','Uma exportação para CSV','Uma ferramenta de terceiros'],a:1,ex:'"Refere-se a um instantâneo no tempo dos dados armazenados no banco de dados".'},
+ {tp:'Réplica',q:'Réplicas em bancos NoSQL são usadas para melhorar:',o:['Apenas a segurança','Disponibilidade, escalabilidade e tolerância a falhas','A velocidade de digitação','O design das tabelas'],a:1,ex:'"Essas réplicas são usadas para melhorar a disponibilidade, escalabilidade e tolerância a falhas no sistema".'},
+ {tp:'NoSQL',q:'Os bancos NoSQL nem sempre oferecem suporte a:',o:['Backup','Transações ACID (Atomicidade, Consistência, Isolamento, Durabilidade)','Dados','JSON'],a:1,ex:'"Os bancos de dados NoSQL nem sempre oferecem suporte a transações ACID... não fornecem mecanismos integrados para criar instantâneos transacionais consistentes".'},
+ {tp:'Cenário Bancário',q:'Para um sistema bancário (SQL), qual combinação é mais adequada?',o:['Apenas backup completo anual','Completo + Diferencial + Registros de transações (+ Hot backup se 24/7)','Exportação para CSV','Apenas réplica'],a:1,ex:'Zero tolerância à perda exige logs de transação (point-in-time); o diferencial acelera a restauração; o hot backup mantém o banco 24/7.'},
+ {tp:'Cenário Rede Social',q:'Para uma rede social de grande escala (NoSQL), a estratégia mais adequada costuma ser:',o:['Cold backup diário','Réplica + Snapshots (com ferramentas de terceiros para escala)','Backup completo apenas','Nenhum backup'],a:1,ex:'Réplicas garantem disponibilidade/tolerância a falhas; snapshots dão pontos de restauração; ferramentas de terceiros atendem ao grande volume.'},
+ {tp:'Registros de Transações',q:'Os backups de registros de transações são armazenados e retidos com base em:',o:['Necessidades e políticas de retenção de dados da organização','O tamanho do disco apenas','A marca do servidor','Nada — são descartados'],a:0,ex:'"...retidos por um período de tempo especificado, com base nas necessidades e políticas de retenção de dados da organização".'}
+];
+let qz={order:[],i:0,score:0,wrong:[]};
+function startQuiz(){
+  qz={order:QUIZ.slice().sort(function(){return Math.random()-.5;}),i:0,score:0,wrong:[]};
+  renderQuiz();
+}
+function renderQuiz(){
+  const el=document.getElementById('quizBox');
+  if(qz.i>=qz.order.length){
+    const pct=Math.round(qz.score/qz.order.length*100);
+    let msg=pct===100?'🏆 Excelente! Você domina os backups da Semana #7!':
+            pct>=80?'👍 Muito bom! Revise os tópicos marcados abaixo.':
+            pct>=50?'📖 Bom começo — consulte a aba Referência e tente de novo.':
+            '🔄 Revise o material da Semana #7 e tente novamente.';
+    let h='<h1>📝 Resultado do Quiz</h1><div class="score-big">'+qz.score+' / '+qz.order.length+'</div><p style="text-align:center;margin-bottom:14px">'+msg+'</p>';
+    if(qz.wrong.length){ h+='<div class="banner warn"><b>Tópicos para revisar:</b><br>'+qz.wrong.map(function(t){return '<span class="pill">'+t+'</span>';}).join('')+'</div>'; }
+    h+='<div class="btn-row"><button class="btn" onclick="startQuiz()">🔄 Jogar novamente</button><button class="btn ghost" onclick="showTab(\'ref\')">📚 Ver Referência</button></div>';
+    el.innerHTML=h; return;
+  }
+  const q=qz.order[qz.i];
+  let h='<div class="progress"><i style="width:'+(qz.i/qz.order.length*100)+'%"></i></div>'+
+    '<p class="sub">Questão '+(qz.i+1)+' de '+qz.order.length+' · Acertos: '+qz.score+'</p>'+
+    '<div class="q-title">'+q.q+'</div><div class="opts" id="quizOpts">';
+  q.o.forEach(function(op,idx){ h+='<button class="opt" onclick="answerQuiz('+idx+')">'+op+'</button>'; });
+  h+='</div><div id="quizExp"></div>';
+  el.innerHTML=h;
+}
+function answerQuiz(idx){
+  const q=qz.order[qz.i], ok=idx===q.a;
+  if(ok) qz.score++; else qz.wrong.push(q.tp);
+  const btns=document.querySelectorAll('#quizOpts .opt');
+  btns.forEach(function(b,i){ b.disabled=true; if(i===q.a)b.classList.add('correta'); else if(i===idx)b.classList.add('errada'); });
+  document.getElementById('quizExp').innerHTML='<div class="exp"><b>'+(ok?'✅ Correto!':'❌ Incorreto.')+'</b> '+q.ex+'</div>'+
+    '<div class="btn-row"><button class="btn" onclick="qz.i++;renderQuiz()">'+(qz.i+1<qz.order.length?'Próxima ▶':'Ver resultado 🏁')+'</button></div>';
+}
+
+/* ================== REFERÊNCIA ================== */
+function renderRef(){
+  document.getElementById('refBox').innerHTML=
+  '<div class="card"><h1>📚 Referência — Tipos de Backup (Semana #7)</h1><p class="sub">Resumo das regras do material para consulta rápida.</p>'+
+  '<h2>🗄️ Backups em RDBMS (SQL)</h2><div class="grid2">'+
+  '<div class="ref-card"><h3>📦 Completo (Full)</h3><p>Cópia de <b>todos</b> os dados e objetos num momento específico (tabelas, views, procedures, funções). Garante restauração integral, "nenhum dado será perdido".</p><p><span class="tag ruim">Contra:</span> mais tempo e recursos — copia tudo a cada execução.</p></div>'+
+  '<div class="ref-card"><h3>🔀 Diferencial</h3><p>Salva apenas as alterações <b>desde o último backup COMPLETO</b>. Restauração: último completo + último diferencial (rápida).</p><p><span class="tag ruim">Contra:</span> cresce com o tempo; depende do completo — se corrompido, recuperação pode ser impossível.</p></div>'+
+  '<div class="ref-card"><h3>➕ Incremental</h3><p>Salva apenas as alterações <b>desde o ÚLTIMO backup</b> (completo ou incremental). Menor consumo de espaço.</p><p><span class="tag ruim">Contra:</span> restauração sequencial de todos os incrementais — mais complexa e demorada.</p></div>'+
+  '<div class="ref-card"><h3>📜 Registros de Transações</h3><p>Registra todas as operações (inserções, atualizações, exclusões). Permite <b>recuperação ponto-a-ponto</b> (point-in-time). Usado junto com completo/diferencial.</p><p><span class="tag ok">Retenção:</span> conforme políticas da organização.</p></div>'+
+  '<div class="ref-card"><h3>🔥 Hot Backup</h3><p>Executado com o banco <b>em execução e acessível</b>. Sem interrupção; dados consistentes em tempo real.</p><p><span class="tag ruim">Contra:</span> exige recursos adicionais; nem todo SGBD tem suporte nativo. Cold backup = banco desligado.</p></div>'+
+  '</div><h2 style="margin-top:18px">🍃 Backups no NoSQL</h2><div class="grid2">'+
+  '<div class="ref-card"><h3>📸 Snapshot (Instantâneo)</h3><p>Instantâneo no tempo dos dados. NoSQL nem sempre suporta ACID, então não há sempre instantâneos transacionais consistentes integrados.</p></div>'+
+  '<div class="ref-card"><h3>🔁 Réplica (Replicação)</h3><p>Cópias distribuídas em diferentes nós/servidores: melhora <b>disponibilidade, escalabilidade e tolerância a falhas</b>. Configurações variam conforme o modelo de consistência.</p></div>'+
+  '<div class="ref-card"><h3>📤 Exportação / Importação</h3><p>Exportar dados (ex.: MongoDB → CSV/JSON) e importar depois. Útil como cópia de arquivo e migração de dados.</p></div>'+
+  '<div class="ref-card"><h3>🧰 Ferramentas de Terceiros</h3><p>Soluções especializadas de backup para NoSQL, atendendo grandes volumes e políticas avançadas.</p></div>'+
+  '</div></div>'+
+  '<div class="card"><h2>⚖️ Comparativo rápido (Full vs Diferencial vs Incremental)</h2>'+
+  '<table><tr><th>Método</th><th>O que copia</th><th>Espaço</th><th>Restauração</th></tr>'+
+  '<tr><td><b>Completo</b></td><td>Tudo, sempre (independe de backups anteriores)</td><td>Maior</td><td>Rápida — 1 arquivo</td></tr>'+
+  '<tr><td><b>Diferencial</b></td><td>Mudanças desde o último <b>completo</b></td><td>Médio (cresce até o próximo completo)</td><td>Completo + último diferencial</td></tr>'+
+  '<tr><td><b>Incremental</b></td><td>Mudanças desde o <b>último backup</b></td><td>Menor</td><td>Completo + TODOS os incrementais em ordem</td></tr></table></div>';
+}
+
+/* ================== NAVEGAÇÃO ================== */
+function showTab(t){
+  ['sim','quiz','ref'].forEach(function(x){document.getElementById('tab-'+x).classList.toggle('hidden',x!==t);});
+  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('ativo',b.dataset.tab===t);});
+  if(t==='quiz'&&qz.order.length===0) startQuiz();
+}
+document.querySelectorAll('nav button').forEach(function(b){ b.addEventListener('click',function(){showTab(b.dataset.tab);}); });
+renderWizard(); renderRef();
+</script>
+</body>
+</html>
