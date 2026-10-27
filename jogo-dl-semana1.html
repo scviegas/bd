@@ -621,7 +621,6 @@ function renderStageStep(){
   $("#btn-next").style.display = "none";
   $("#btn-next").onclick = null;
   delete $("#btn-next").dataset.finished;
-  delete $("#btn-next").dataset.finished;
 
   if(currentStage.type==="quiz")      renderQuiz(c);
   else if(currentStage.type==="intruder") renderIntruder(c);
@@ -677,23 +676,35 @@ function renderIntruder(c){
   const wrap = document.createElement("div");
   wrap.innerHTML = `<div class="q-num">Desafio ${stageCursor+1}/${currentStage.questions.length}</div>
     <div class="q-text">${q.title}</div>
-    <p class="muted" style="font-size:13px;margin-bottom:8px">Clica no cartão que é o INTRUSO (não pertence ao grupo).</p>`;
+    <p class="muted" style="font-size:13px;margin-bottom:8px">Selecione o cartão que NÃO pertence ao grupo.</p>`;
   const grid = document.createElement("div");
   grid.className = "intruder-grid";
+  let answered = false;
   ["left","right"].forEach(side=>{
-    const card = document.createElement("div");
+    const card = document.createElement("button");
+    card.type = "button";
     card.className = "intruder-card";
+    card.style.textAlign = "left";
+    card.style.color = "var(--text)";
     card.innerHTML = `<h4>Cartão ${q[side].label}</h4><p>${q[side].text}</p>`;
     card.addEventListener("click", ()=>{
-      const chosen = side;
-      const correct = chosen===q.answer;
+      if(answered) return;
+      answered = true;
+      const correct = side === q.answer;
       card.classList.add("selected");
-      $$ (".intruder-card", grid).forEach(x=>{x.style.pointerEvents="none"});
+      grid.querySelectorAll(".intruder-card").forEach(el=>{el.disabled = true;});
       const fb = document.createElement("div");
-      fb.className = "feedback " + (correct?"ok":"no");
-      fb.innerHTML = `<div class="label">${correct?"✓ Intruso encontrado!":"✗ Não era este."}</div>${q.ex}`;
+      fb.className = "feedback " + (correct ? "ok" : "no");
+      fb.innerHTML = `<div class="label">${correct ? "✓ Intruso encontrado!" : "✗ Não era este."}</div>${q.ex}`;
       wrap.appendChild(fb);
       handleAnswer(correct);
+      if(STATE.lives > 0){
+        const next = document.getElementById("btn-next");
+        next.style.display = "inline-block";
+        next.hidden = false;
+        next.disabled = false;
+        next.textContent = stageCursor + 1 >= totalSteps(currentStage) ? "Concluir Fase ✓" : "Próximo desafio →";
+      }
     });
     grid.appendChild(card);
   });
