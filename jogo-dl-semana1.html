@@ -428,7 +428,7 @@ const STAGES = [
         left:{label:"A", text:"ChatGPT, DALL-E, Midjourney, GitHub Copilot — IA generativa no mundo real."},
         right:{label:"B", text:"Microsoft Paint (1995) — editor de pixéis clássico, sem IA generativa."},
         answer:"right",
-        ex:"As aplicações da direita são produtos de IA Generativa; o Paint é um editor clássico — o intruso."
+        ex:"As aplicações do cartão A são exemplos de IA Generativa; o Paint clássico é um editor de imagens — o intruso."
       },
       {
         title:"Bibliotecas Python para DL",
@@ -617,8 +617,11 @@ function renderStageStep(){
   const c = $("#stage-content");
   c.innerHTML = "";
   setStageProgress(stageProgress());
-  $("#btn-prev").disabled = stageCursor===0;
+  $("#btn-prev").disabled = true; // evita voltar a perguntas já pontuadas
   $("#btn-next").style.display = "none";
+  $("#btn-next").onclick = null;
+  delete $("#btn-next").dataset.finished;
+  delete $("#btn-next").dataset.finished;
 
   if(currentStage.type==="quiz")      renderQuiz(c);
   else if(currentStage.type==="intruder") renderIntruder(c);
@@ -685,7 +688,7 @@ function renderIntruder(c){
       const chosen = side;
       const correct = chosen===q.answer;
       card.classList.add("selected");
-      $$(grid, ".intruder-card").forEach(x=>{x.style.pointerEvents="none"});
+      $$ (".intruder-card", grid).forEach(x=>{x.style.pointerEvents="none"});
       const fb = document.createElement("div");
       fb.className = "feedback " + (correct?"ok":"no");
       fb.innerHTML = `<div class="label">${correct?"✓ Intruso encontrado!":"✗ Não era este."}</div>${q.ex}`;
@@ -885,6 +888,19 @@ function renderOrder(c){
     row.className = "order-item";
     row.draggable = true;
     row.innerHTML = `<span class="grip">≡</span><span class="code">${it.code}</span><span class="muted">— ${it.desc}</span>`;
+    const controls = document.createElement("span");
+    controls.className = "order-controls";
+    for(const [symbol, direction] of [["↑",-1],["↓",1]]){
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "btn sm ghost";
+      btn.textContent = symbol; btn.setAttribute("aria-label", direction < 0 ? "Mover para cima" : "Mover para baixo");
+      btn.addEventListener("click", ()=>{
+        if(direction < 0 && row.previousElementSibling) list.insertBefore(row,row.previousElementSibling);
+        if(direction > 0 && row.nextElementSibling) list.insertBefore(row.nextElementSibling,row);
+      });
+      controls.appendChild(btn);
+    }
+    row.appendChild(controls);
     list.appendChild(row);
   });
   wrap.appendChild(list);
@@ -969,8 +985,9 @@ function finishStage(){
   save();
   setTimeout(()=>{ toast("Fase concluída!", `+${stageScoreThis} pts`, true); }, 600);
   $("#btn-next").style.display = "";
-  $("#btn-next").textContent = "Voltar ao Mapa →";
-  $("#btn-next").onclick = ()=>{ show("screen-map"); renderMap(); };
+  $("#btn-next").textContent = currentStage.id === STAGES.length ? "Ver resultado final →" : "Voltar ao Mapa →";
+  $("#btn-next").onclick = null;
+  $("#btn-next").dataset.finished = "true";
 }
 
 /* ---------- Navigation ---------- */
@@ -992,8 +1009,12 @@ $("#btn-prev").addEventListener("click", ()=>{
   if(stageCursor>0){ stageCursor--; renderStageStep(); }
 });
 $("#btn-next").addEventListener("click", ()=>{
-  // se a fase já estiver marcada como concluída (e o botão foi remapeado)
-  if($("#btn-next").onclick){ $("#btn-next").onclick(); return; }
+  if($("#btn-next").dataset.finished === "true") {
+    delete $("#btn-next").dataset.finished;
+    if(currentStage.id === STAGES.length) endGame(true);
+    else { show("screen-map"); renderMap(); }
+    return;
+  }
   if(stageCursor+1 < totalSteps(currentStage)){
     stageCursor++;
     renderStageStep();
@@ -1045,7 +1066,7 @@ function endGame(success){
 function showFinal(){
   show("screen-final");
   $("#final-score").textContent = STATE.score + " pts";
-  const max = STAGES.length * (30*5 + 20*5 + 20); // estimativa
+  const max = 5*30 + 5*30 + 5*20 + 20 + 30 + 4*30 + 30; // máximo real: 600
   let stars = 1;
   if(STATE.score >= max*0.4) stars = 2;
   if(STATE.score >= max*0.7) stars = 3;
@@ -1057,7 +1078,7 @@ function showFinal(){
     <div>Pontuação total: <b>${STATE.score}</b> pts</div>
   `;
   $("#cert").innerHTML = `
-    <b>🎓 Certificado de Conclusão — Semana 1</b><br>
+    <b>${completedCount === STAGES.length ? "🎓 Certificado de Conclusão — Semana 1" : "📋 Relatório de participação — Semana 1"}</b><br>
     O jogador completou a <i>Missão Deep Learning</i> com ${STATE.score} pontos e ${completedCount} de ${STAGES.length} fases vencidas.
     Cobriu: conceitos IA/ML/DL/Generativa, arquiteturas, neurónio artificial, pilares matemáticos, retropropagação e ciclo de treino em PyTorch.
     Recomenda-se agora a leitura do material oficial da Semana 1 e o início do planeamento do Projeto Final (chatbot generativo por domínio).
