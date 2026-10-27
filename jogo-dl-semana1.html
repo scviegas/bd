@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Missão Deep Learning — Semana 1</title>
+<style>
+  :root{
+    --bg-0:#0b1020;
+    --bg-1:#111a36;
+    --bg-2:#1b2550;
+    --primary:#5eead4;
+    --primary-2:#22d3ee;
+    --accent:#f472b6;
+    --warn:#fbbf24;
+    --ok:#34d399;
+    --err:#f87171;
+    --text:#e5edff;
+    --muted:#9fb0d8;
+    --card:rgba(28,40,82,.62);
+    --card-2:rgba(40,54,108,.62);
+    --border:rgba(94,234,212,.25);
+    --shadow:0 12px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Segoe UI',Roboto,Inter,system-ui,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1200px 700px at 10% -10%, rgba(94,234,212,.18), transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, rgba(244,114,182,.18), transparent 60%),
+      linear-gradient(160deg,var(--bg-0),var(--bg-1) 60%,var(--bg-2));
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .app{max-width:1000px;margin:0 auto;padding:22px 18px 60px;}
+  header.top{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:14px;flex-wrap:wrap;margin-bottom:14px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:46px;height:46px;border-radius:14px;
+    background:conic-gradient(from 90deg,var(--primary),var(--primary-2),var(--accent),var(--primary));
+    box-shadow:0 0 18px rgba(94,234,212,.55);
+    position:relative;
+  }
+  .logo::after{
+    content:"";position:absolute;inset:6px;border-radius:10px;
+    background:var(--bg-0);
+  }
+  .logo::before{
+    content:"";position:absolute;inset:0;border-radius:14px;
+    background:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 6px,transparent 6px 12px);
+    mix-blend-mode:overlay;
+  }
+  .brand h1{font-size:18px;letter-spacing:.5px}
+  .brand p{font-size:12px;color:var(--muted)}
+  .hud{
+    display:flex;gap:10px;flex-wrap:wrap;
+  }
+  .hud .chip{
+    background:var(--card);border:1px solid var(--border);
+    padding:8px 12px;border-radius:10px;font-size:13px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .chip b{color:var(--primary)}
+  .chip.heart b{color:var(--accent)}
+  .chip.score b{color:var(--warn)}
+  .chip.level b{color:var(--primary-2)}
+  /* Cards & screens */
+  .screen{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:26px 22px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(8px);
+    animation:fade .4s ease;
+  }
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .screen + .screen{margin-top:18px}
+  h2{font-size:22px;margin-bottom:6px}
+  h3{font-size:16px;margin:14px 0 8px;color:var(--primary)}
+  p.lead{color:var(--muted);line-height:1.55;margin-bottom:14px;font-size:14.5px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .grid{display:grid;gap:12px}
+  .btn{
+    appearance:none;border:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(94,234,212,.18),rgba(34,211,238,.10));
+    color:var(--text);
+    padding:11px 16px;border-radius:12px;cursor:pointer;
+    font-weight:600;font-size:14px;letter-spacing:.3px;
+    transition:transform .12s ease,box-shadow .12s ease,background .12s;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(94,234,212,.18)}
+  .btn:active{transform:translateY(0)}
+  .btn.primary{background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#06121a;border-color:transparent}
+  .btn.accent{background:linear-gradient(180deg,var(--accent),#c026d3);color:#fff;border-color:transparent}
+  .btn.ghost{background:transparent}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.sm{padding:7px 10px;font-size:12.5px}
+  .tag{
+    display:inline-block;font-size:11px;padding:3px 8px;border-radius:999px;
+    background:rgba(94,234,212,.12);color:var(--primary);border:1px solid var(--border);
+    margin-right:6px;
+  }
+  .tag.pink{background:rgba(244,114,182,.12);color:var(--accent)}
+  .tag.warn{background:rgba(251,191,36,.12);color:var(--warn)}
+  /* Start screen */
+  .hero{display:grid;gap:18px;grid-template-columns:1.2fr .8fr}
+  @media(max-width:780px){.hero{grid-template-columns:1fr}}
+  .hero .left h2{font-size:26px;line-height:1.15}
+  .hero .left .sub{color:var(--muted);margin:8px 0 14px;font-size:14px}
+  .hero .right{
+    background:linear-gradient(180deg,rgba(34,211,238,.10),rgba(244,114,182,.08));
+    border-radius:14px;padding:16px;border:1px dashed var(--border);
+  }
+  .hero .right ul{list-style:none;display:grid;gap:8px;margin-top:8px}
+  .hero .right li{font-size:13.5px;color:var(--text);display:flex;gap:8px;align-items:flex-start}
+  .hero .right li::before{content:"›";color:var(--primary);font-weight:800}
+  /* Level map */
+  .map{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .level{
+    background:linear-gradient(180deg,var(--card-2),var(--card));
+    border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;
+    transition:transform .12s,box-shadow .12s,border-color .12s;position:relative;overflow:hidden;
+  }
+  .level:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.35);border-color:var(--primary)}
+  .level.locked{opacity:.5;cursor:not-allowed;filter:grayscale(.4)}
+  .level.done{border-color:var(--ok)}
+  .level .num{
+    width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;
+    background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#06121a;margin-bottom:8px;
+  }
+  .level.locked .num{background:#3a4a78;color:#9fb0d8}
+  .level h4{font-size:15px;margin-bottom:4px}
+  .level p{font-size:12px;color:var(--muted);line-height:1.4}
+  .level .badge{
+    position:absolute;top:10px;right:10px;font-size:10px;padding:2px 6px;border-radius:6px;
+    background:rgba(52,211,153,.18);color:var(--ok);border:1px solid rgba(52,211,153,.35);
+  }
+  /* Question/Quiz */
+  .q-num{font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .q-text{font-size:17px;margin:6px 0 12px;line-height:1.4}
+  .options{display:grid;gap:8px}
+  .opt{
+    text-align:left;background:var(--card-2);border:1px solid var(--border);color:var(--text);
+    padding:11px 14px;border-radius:10px;cursor:pointer;font-size:14px;
+    transition:transform .1s,background .12s,border-color .12s;display:flex;gap:10px;align-items:flex-start;
+  }
+  .opt:hover{transform:translateX(2px);border-color:var(--primary)}
+  .opt .dot{width:22px;height:22px;border-radius:50%;background:#1b2550;border:1px solid var(--border);display:grid;place-items:center;font-weight:800;flex-shrink:0;color:var(--primary)}
+  .opt.correct{border-color:var(--ok);background:rgba(52,211,153,.14)}
+  .opt.correct .dot{background:var(--ok);color:#06121a}
+  .opt.wrong{border-color:var(--err);background:rgba(248,113,113,.14)}
+  .opt.wrong .dot{background:var(--err);color:#06121a}
+  .opt:disabled{cursor:not-allowed}
+  .feedback{margin-top:10px;font-size:13px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.18)}
+  .feedback.ok{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.10)}
+  .feedback.no{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.10)}
+  .feedback .label{font-weight:800;letter-spacing:.4px}
+  .progress{height:8px;background:rgba(0,0,0,.25);border-radius:999px;overflow:hidden;margin:6px 0 14px;border:1px solid var(--border)}
+  .progress .bar{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .3s}
+  .actions{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+  /* Match game */
+  .match{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:600px){.match{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:8px}
+  .card{padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card-2);cursor:pointer;font-size:14px;transition:all .12s}
+  .card.sel{border-color:var(--primary);background:rgba(94,234,212,.12)}
+  .card.matched{opacity:.4;cursor:default;border-color:var(--ok)}
+  /* Drag-drop order */
+  .order-list{display:flex;flex-direction:column;gap:8px}
+  .order-item{
+    background:var(--card-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+    cursor:grab;font-size:13.5px;display:flex;gap:10px;align-items:center;user-select:none;
+  }
+  .order-item.dragging{opacity:.5}
+  .order-item .grip{color:var(--muted);font-weight:800}
+  .order-item .code{font-family:ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.25);padding:2px 6px;border-radius:6px;font-size:12px}
+  /* Find intruder */
+  .intruder-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:600px){.intruder-grid{grid-template-columns:1fr}}
+  .intruder-card{
+    background:var(--card-2);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;
+    transition:transform .12s,border-color .12s,background .12s
+  }
+  .intruder-card:hover{transform:translateY(-2px);border-color:var(--primary)}
+  .intruder-card h4{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .intruder-card p{font-size:14px;line-height:1.5}
+  .intruder-card.selected{border-color:var(--warn);background:rgba(251,191,36,.10)}
+  /* Equation */
+  .eq{
+    display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;
+    font-size:24px;font-family:ui-monospace,Menlo,Consolas,monospace;
+    background:rgba(0,0,0,.25);padding:18px;border-radius:12px;border:1px solid var(--border);margin:8px 0 14px;
+  }
+  .eq .slot{
+    min-width:42px;min-height:42px;border:1px dashed var(--border);border-radius:8px;
+    display:grid;place-items:center;padding:4px 8px;background:rgba(0,0,0,.18);
+  }
+  .eq .slot.filled{border-style:solid;border-color:var(--primary);background:rgba(94,234,212,.10)}
+  .eq .op{color:var(--primary);font-weight:800}
+  .tokens{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+  .token{
+    background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#06121a;font-weight:800;
+    padding:6px 12px;border-radius:8px;cursor:grab;font-size:13px;
+  }
+  .token.used{opacity:.4;cursor:default}
+  /* Result */
+  .result-big{font-size:46px;font-weight:800;background:linear-gradient(90deg,var(--primary),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stars{font-size:24px;margin:6px 0 14px}
+  .summary{display:grid;gap:6px;margin:10px 0 16px;font-size:13.5px;color:var(--muted)}
+  .summary b{color:var(--text)}
+  .cert{border:1px dashed var(--border);padding:14px;border-radius:12px;background:rgba(94,234,212,.06);font-size:13.5px;line-height:1.6}
+  /* Toast */
+  .toast{
+    position:fixed;right:14px;bottom:14px;background:var(--card);border:1px solid var(--border);
+    padding:12px 14px;border-radius:10px;box-shadow:var(--shadow);max-width:300px;
+    transform:translateY(120%);transition:transform .25s;z-index:50;font-size:13.5px;
+  }
+  .toast.show{transform:none}
+  .toast .t-title{font-weight:800;color:var(--primary);margin-bottom:2px}
+  .shake{animation:shake .3s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  /* Final */
+  .hidden{display:none}
+  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:11.5px;line-height:1.6}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend span b{color:var(--text)}
+  .badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-top:8px}
+  .badge-cell{padding:8px;border-radius:8px;background:rgba(0,0,0,.18);border:1px solid var(--border);text-align:center;font-size:11px}
+  .badge-cell.earned{background:linear-gradient(180deg,rgba(94,234,212,.18),rgba(244,114,182,.10));border-color:var(--primary)}
+  .badge-cell .ico{font-size:18px;display:block;margin-bottom:2px}
+  .badge-cell:not(.earned){opacity:.4}
+  code.inline{font-family:ui-monospace,Menlo,Consolas,monospace;background:rgba(0,0,0,.25);padding:1px 5px;border-radius:4px;font-size:12.5px;color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Missão: Aprendizagem Profunda</h1>
+        <p>CSAI-353 · Semana 1 · Como é que uma IA aprende alguma coisa?</p>
+      </div>
+    </div>
+    <div class="hud">
+      <div class="chip level">Nível <b id="hud-level">1</b>/6</div>
+      <div class="chip heart">Vidas <b id="hud-lives">3</b></div>
+      <div class="chip score">Pontos <b id="hud-score">0</b></div>
+    </div>
+  </header>
+
+  <!-- START SCREEN -->
+  <section id="screen-start" class="screen">
+    <div class="hero">
+      <div class="left">
+        <span class="tag">Jogo Educativo</span>
+        <span class="tag pink">6 Fases</span>
+        <h2>Bem-vindo, futuro engenheiro de IA! 🤖</h2>
+        <p class="sub">
+          Nesta missão vais percorrer os conceitos da <b>Semana 1</b> do curso:
+          o que é <i>Deep Learning</i>, arquiteturas, IA generativa, neurónios,
+          matemática, retropropagação e o ciclo de treino em <b>PyTorch</b>.
+          Cada fase vale pontos e dá acesso à próxima.
+        </p>
+        <div class="row">
+          <button class="btn primary" id="btn-start">▶ Começar Missão</button>
+          <button class="btn ghost" id="btn-reset">Reiniciar Progresso</button>
+        </div>
+        <div class="legend">
+          <span>Tempo médio: <b>~10 min</b></span>
+          <span>Dificuldade: <b>Iniciante → Médio</b></span>
+          <span>Idioma: <b>Português (PT)</b></span>
+        </div>
+      </div>
+      <div class="right">
+        <h3 style="margin-top:0">O que vais praticar</h3>
+        <ul>
+          <li>Distinguir IA, ML, DL e IA Generativa</li>
+          <li>Reconhecer arquiteturas (CNN, RNN, Transformer, GAN, VAE)</li>
+          <li>Entender o neurónio artificial <code class="inline">y = Wx + b</code></li>
+          <li>Aplicar pilares matemáticos (Álgebra Linear + Cálculo)</li>
+          <li>Ordenar o ciclo de treino em PyTorch</li>
+          <li>Ligar conceitos ao Projeto Final (chatbot generativo)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEVEL MAP -->
+  <section id="screen-map" class="screen hidden">
+    <h2>Mapa da Missão</h2>
+    <p class="lead">Escolhe uma fase para começar. As fases desbloqueiam-se em sequência.</p>
+    <div class="map" id="map"></div>
+    <div class="badge-grid" id="badges"></div>
+  </section>
+
+  <!-- GAME STAGE -->
+  <section id="screen-stage" class="screen hidden">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div>
+        <span class="q-num" id="stage-tag">Fase 1</span>
+        <h2 id="stage-title">—</h2>
+      </div>
+      <button class="btn ghost sm" id="btn-exit">← Voltar ao mapa</button>
+    </div>
+    <p class="lead" id="stage-desc">—</p>
+    <div class="progress"><div class="bar" id="stage-bar"></div></div>
+    <div id="stage-content"></div>
+    <div class="actions">
+      <button class="btn ghost" id="btn-prev">← Anterior</button>
+      <button class="btn primary" id="btn-next">Próximo →</button>
+    </div>
+  </section>
+
+  <!-- FINAL SCREEN -->
+  <section id="screen-final" class="screen hidden">
+    <span class="tag">Relatório de Missão</span>
+    <h2>Missão Concluída!</h2>
+    <div class="result-big" id="final-score">0 pts</div>
+    <div class="stars" id="final-stars">★★★</div>
+    <div class="summary" id="final-summary"></div>
+    <div class="cert" id="cert"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary" id="btn-replay">↻ Jogar Novamente</button>
+      <button class="btn ghost" id="btn-review">📖 Rever Conteúdo</button>
+    </div>
+    <div id="review-content" class="hidden" style="margin-top:14px"></div>
+  </section>
+
+  <footer>
+    Conteúdo baseado em “Aprendizagem Profunda e IA Generativa — Semana 1” (CSAI-353).<br>
+    Jogo educativo · Não substitui o material oficial do curso · Feito para fixar os conceitos.
+  </footer>
+</div>
+
+<div class="toast" id="toast">
+  <div class="t-title" id="toast-title">Aviso</div>
+  <div id="toast-msg"></div>
+</div>
+
+<script>
+/* ============================================================
+   MISSÃO DEEP LEARNING — JOGO EDUCATIVO SEMANA 1
+   Estrutura: 6 fases, cada uma com 3-5 questões/interações.
+============================================================ */
+const STATE = {
+  score: 0,
+  lives: 3,
+  level: 1,
+  unlocked: 1,
+  completed: {},
+  perStageScore: {},
+};
+
+const STAGES = [
+  {
+    id:1, title:"Fundamentos: IA, ML, DL e IA Generativa",
+    desc:"Vamos separar os conceitos que mais se confundem. Em cada pergunta, escolhe a opção correta.",
+    type:"quiz",
+    questions:[
+      {
+        q:"Qual é a relação correta entre estes conceitos?",
+        opts:["IA ⊂ ML ⊂ DL","DL ⊂ ML ⊂ IA","ML ⊂ DL ⊂ IA","DL ⊂ IA ⊂ ML"],
+        a:1,
+        ex:"Deep Learning é um subconjunto do Machine Learning, que por sua vez é um subconjunto da Inteligência Artificial."
+      },
+      {
+        q:"O que torna uma rede neural 'profunda' (Deep Learning)?",
+        opts:["Usa muitos dados","Tem múltiplas camadas ocultas (n > 2)","Usa GPUs","Tem milhões de parâmetros"],
+        a:1,
+        ex:"DL usa redes neurais com várias camadas ocultas, permitindo aprendizagem automática de características em hierarquia."
+      },
+      {
+        q:"Qual é a característica PRINCIPAL da IA Generativa?",
+        opts:["Classifica imagens existentes","Cria novo conteúdo (texto, imagem, áudio, código)","Apenas analisa dados","Usa só regras fixas"],
+        a:1,
+        ex:"IA Generativa cria conteúdo novo que se assemelha à distribuição dos dados de treino, podendo ser condicionada por prompts."
+      },
+      {
+        q:"Qual destas NÃO é uma abordagem típica de IA Generativa?",
+        opts:["GANs","VAE","Modelos de Difusão","Regressão Logística"],
+        a:3,
+        ex:"Regressão Logística é um modelo de classificação tradicional, não generativo. GANs, VAEs e Difusão são abordagens generativas."
+      },
+      {
+        q:"A equação fundamental de uma camada de rede neural é:",
+        opts:["y = Wx + b","y = sin(x)","y = a^x","y = log(x)"],
+        a:0,
+        ex:"A operação de uma camada totalmente conectada é y = Wx + b, onde W são os pesos, x a entrada e b o viés."
+      }
+    ]
+  },
+  {
+    id:2, title:"Encontre o Intruso 🕵️",
+    desc:"Em cada par, um item é o INTRUSO (não pertence ao grupo). Identifica-o. Dica: relembra o exercício do poema de Lorca vs. DeepSeek.",
+    type:"intruder",
+    questions:[
+      {
+        title:"Arquiteturas de Deep Learning",
+        left:{label:"A", text:"Redes Neurais Recorrentes (RNN) — modela sequências como LSTM e GRU."},
+        right:{label:"B", text:"Regressão Linear Simples — método estatístico clássico, não DL."},
+        answer:"right",
+        ex:"RNN é arquitetura de DL (ex.: LSTM, GRU). Regressão Linear é um método clássico — o intruso."
+      },
+      {
+        title:"Modelos de Exemplo",
+        left:{label:"A", text:"ResNet, VGG, Inception — clássicos para visão computacional."},
+        right:{label:"B", text:"MySQL — base de dados relacional, nada tem que ver com CNNs."},
+        answer:"right",
+        ex:"ResNet/VGG/Inception são CNNs. MySQL é um SGBD — o intruso."
+      },
+      {
+        title:"IA Generativa",
+        left:{label:"A", text:"StyleGAN, DCGAN — geram imagens realistas adversarialmente."},
+        right:{label:"B", text:"k-Means — algoritmo de clustering não supervisionado, não generativo."},
+        answer:"right",
+        ex:"StyleGAN/DCGAN são GANs generativas. k-Means agrupa dados existentes — não gera conteúdo novo."
+      },
+      {
+        title:"Aplicações Reais",
+        left:{label:"A", text:"ChatGPT, DALL-E, Midjourney, GitHub Copilot — IA generativa no mundo real."},
+        right:{label:"B", text:"Microsoft Paint (1995) — editor de pixéis clássico, sem IA generativa."},
+        answer:"right",
+        ex:"As aplicações da direita são produtos de IA Generativa; o Paint é um editor clássico — o intruso."
+      },
+      {
+        title:"Bibliotecas Python para DL",
+        left:{label:"A", text:"torch, torch.nn, torchvision — núcleo PyTorch."},
+        right:{label:"B", text:"matplotlib — visualização (não treina modelos)."},
+        answer:"right",
+        ex:"Matplotlib é essencial para visualização, mas não treina redes. Contudo, é parte do ecossistema. Aqui o 'intruso' é o que NÃO treina modelos diretamente: matplotlib."
+      }
+    ]
+  },
+  {
+    id:3, title:"Memory Match: Arquitetura ↔ Modelo",
+    desc:"Liga cada arquitetura ao seu modelo de exemplo. Seleciona um item à esquerda e o seu par à direita.",
+    type:"match",
+    pairs:[
+      {left:"Redes Neurais Convolucionais (RNC)", right:"ResNet, VGG, Inception"},
+      {left:"Redes Neurais Recorrentes (RNR)", right:"LSTM, GRU"},
+      {left:"Transformers", right:"BERT, GPT, ViT"},
+      {left:"Redes Adversariais Generativas (GANs)", right:"DCGAN, StyleGAN"},
+      {left:"Autoencoders", right:"Autoencoder Variacional (VAE)"},
+    ]
+  },
+  {
+    id:4, title:"Constrói o Neurónio: y = Wx + b",
+    desc:"Arrasta as peças para montar a equação fundamental de uma camada neural. Cada peça só pode ser usada uma vez.",
+    type:"equation",
+    questions:[
+      {
+        target:["W","x","b"],
+        pool:["W","x","b","α","Σ","∂"],
+        desc:"A passagem direta de uma camada neural é y = ? ? + ? (por esta ordem: peso, entrada, viés).",
+        ex:"y = Wx + b → W (matriz de pesos) × x (vetor de entrada) + b (vetor de viés). É a base de toda a camada totalmente conectada."
+      }
+    ]
+  },
+  {
+    id:5, title:"Pilares Matemáticos",
+    desc:"A Álgebra Linear e o Cálculo são os dois pilares das redes neurais. Mostra que dominas estes conceitos.",
+    type:"quiz",
+    questions:[
+      {
+        q:"No contexto de redes neurais, o que é um TENSO?",
+        opts:["Um tipo de otimizador","Mapa de características de CNN (largura × altura × canais × lote)","Um modelo pré-treinado","Apenas para áudio"],
+        a:1,
+        ex:"Tensores são generalizações de matrizes. Em CNNs, um tensor de ativações tem forma (largura, altura, canais, lote)."
+      },
+      {
+        q:"Qual é a fórmula da descida de gradiente?",
+        opts:["θ_{t+1} = θ_t + η·∇θ J(θ)","θ_{t+1} = θ_t − η·∇θ J(θ)","θ = Wx + b","y = σ(x)"],
+        a:1,
+        ex:"Descida do gradiente: theta_{t+1} = theta_t - eta * grad_theta J(theta). Atualizamos os parametros na direcao OPOSTA do gradiente (minimizando a perda)."
+      },
+      {
+        q:"A regra da cadeia (chain rule) é fundamental porque permite:",
+        opts:["Calcular a perda","Retropropagar o erro através das camadas","Inicializar pesos","Definir a taxa de aprendizagem"],
+        a:1,
+        ex:"A regra da cadeia (dy/dx = dy/du · du/dx) é o coração da retropropagação: propaga o gradiente da saída até à entrada."
+      },
+      {
+        q:"Numa rede para classificar imagens 28×28 (escala de cinza) em 10 classes, quantos neurónios de SAÍDA há?",
+        opts:["1","10","28","784"],
+        a:1,
+        ex:"Saídas = nº de classes = 10. As entradas seriam 28×28=784 (um por pixel)."
+      }
+    ]
+  },
+  {
+    id:6, title:"Ciclo de Treino em PyTorch",
+    desc:"Ordena os passos do ciclo de treino (treina-te a pensar como o PyTorch). Arrasta para cima/baixo ou usa as setas.",
+    type:"order",
+    questions:[
+      {
+        title:"Coloca por ordem o ciclo de treino dentro de 'for epoch in range(epochs):'",
+        items:[
+          {code:"optimizer.zero_grad()", desc:"Reiniciar gradientes"},
+          {code:"outputs = model(X)", desc:"Passagem direta (forward)"},
+          {code:"loss = criterion(outputs, y)", desc:"Calcular perda"},
+          {code:"loss.backward()", desc:"Retropropagação (backward)"},
+          {code:"optimizer.step()", desc:"Atualizar pesos"}
+        ],
+        answerOrder:[0,1,2,3,4]
+      }
+    ]
+  }
+];
+
+/* ---------- Utilitários de UI ---------- */
+const $ = (sel, parent=document)=>(parent||document).querySelector(sel);
+const $$ = (sel, parent=document)=>(parent||document).querySelectorAll(sel);
+function show(id){
+  ["screen-start","screen-map","screen-stage","screen-final"].forEach(s=>{
+    $("#"+s).classList.toggle("hidden", s!==id);
+  });
+}
+function toast(title, msg, ok=true){
+  const t = $("#toast");
+  $("#toast-title").textContent = title;
+  $("#toast-msg").textContent = msg;
+  t.style.borderColor = ok ? "var(--ok)" : "var(--err)";
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+function updateHUD(){
+  $("#hud-score").textContent = STATE.score;
+  $("#hud-lives").textContent = STATE.lives;
+  $("#hud-level").textContent = STATE.level;
+}
+function setStageProgress(p){
+  $("#stage-bar").style.width = Math.max(0,Math.min(100, p)) + "%";
+}
+
+/* ---------- Persistência simples ---------- */
+function save(){
+  try{
+    localStorage.setItem("missao-dl-semana1", JSON.stringify({
+      score:STATE.score, lives:STATE.lives, level:STATE.level,
+      unlocked:STATE.unlocked, completed:STATE.completed, perStageScore:STATE.perStageScore
+    }));
+  }catch(e){}
+}
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem("missao-dl-semana1")||"{}");
+    Object.assign(STATE, d);
+  }catch(e){}
+  updateHUD();
+}
+
+/* ---------- Render: Mapa ---------- */
+function renderMap(){
+  const map = $("#map");
+  map.innerHTML = "";
+  STAGES.forEach((s, i)=>{
+    const locked = s.id > STATE.unlocked;
+    const done = !!STATE.completed[s.id];
+    const score = STATE.perStageScore[s.id]||0;
+    const el = document.createElement("div");
+    el.className = "level" + (locked?" locked":"") + (done?" done":"");
+    el.innerHTML = `
+      ${done?`<div class="badge">✓ ${score} pts</div>`:""}
+      <div class="num">${s.id}</div>
+      <h4>${s.title}</h4>
+      <p>${s.desc.slice(0,90)}${s.desc.length>90?"…":""}</p>
+      <div class="row" style="margin-top:8px">
+        <span class="tag">${s.type}</span>
+        ${locked?`<span class="tag warn">🔒 Bloqueada</span>`:`<span class="tag pink">▶ Jogar</span>`}
+      </div>
+    `;
+    if(!locked){
+      el.addEventListener("click", ()=>startStage(s.id));
+    }
+    map.appendChild(el);
+  });
+  // badges
+  const badges = $("#badges");
+  badges.innerHTML = `
+    <div class="badge-cell ${STATE.completed[1]?'earned':''}"><span class="ico">🧠</span>Conceitos</div>
+    <div class="badge-cell ${STATE.completed[2]?'earned':''}"><span class="ico">🕵️</span>Intruso</div>
+    <div class="badge-cell ${STATE.completed[3]?'earned':''}"><span class="ico">🧩</span>Match</div>
+    <div class="badge-cell ${STATE.completed[4]?'earned':''}"><span class="ico">🧮</span>Neurónio</div>
+    <div class="badge-cell ${STATE.completed[5]?'earned':''}"><span class="ico">∫</span>Pilares</div>
+    <div class="badge-cell ${STATE.completed[6]?'earned':''}"><span class="ico">🔥</span>PyTorch</div>
+  `;
+}
+
+/* ---------- Estado de uma fase ---------- */
+let currentStage = null;
+let stageCursor = 0;
+let stageScoreThis = 0;
+function startStage(id){
+  currentStage = STAGES.find(s=>s.id===id);
+  if(!currentStage) return;
+  STATE.level = id;
+  stageCursor = 0;
+  stageScoreThis = 0;
+  save(); updateHUD();
+  $("#stage-tag").textContent = `Fase ${currentStage.id} de ${STAGES.length}`;
+  $("#stage-title").textContent = currentStage.title;
+  $("#stage-desc").textContent = currentStage.desc;
+  show("screen-stage");
+  renderStageStep();
+}
+
+function renderStageStep(){
+  const c = $("#stage-content");
+  c.innerHTML = "";
+  setStageProgress(stageProgress());
+  $("#btn-prev").disabled = stageCursor===0;
+  $("#btn-next").style.display = "none";
+
+  if(currentStage.type==="quiz")      renderQuiz(c);
+  else if(currentStage.type==="intruder") renderIntruder(c);
+  else if(currentStage.type==="match")    renderMatch(c);
+  else if(currentStage.type==="equation") renderEquation(c);
+  else if(currentStage.type==="order")    renderOrder(c);
+}
+
+function stageProgress(){
+  const total = totalSteps(currentStage);
+  return ((stageCursor)/total)*100;
+}
+function totalSteps(stage){
+  if(stage.type==="quiz"||stage.type==="intruder") return stage.questions.length;
+  if(stage.type==="match") return stage.pairs.length;
+  if(stage.type==="equation"||stage.type==="order") return stage.questions.length;
+  return 1;
+}
+
+/* ---------- Quiz ---------- */
+function renderQuiz(c){
+  const q = currentStage.questions[stageCursor];
+  const block = document.createElement("div");
+  block.className = "options";
+  block.innerHTML = `<div class="q-num">Pergunta ${stageCursor+1}/${currentStage.questions.length}</div>
+    <div class="q-text">${q.q}</div>`;
+  q.opts.forEach((opt,i)=>{
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.innerHTML = `<span class="dot">${String.fromCharCode(65+i)}</span><span>${opt}</span>`;
+    b.addEventListener("click", ()=>{
+      $$(".opt", block).forEach(o=>o.disabled=true);
+      const correct = i===q.a;
+      b.classList.add(correct?"correct":"wrong");
+      if(!correct){
+        const right = block.querySelectorAll(".opt")[q.a];
+        right.classList.add("correct");
+      }
+      const fb = document.createElement("div");
+      fb.className = "feedback " + (correct?"ok":"no");
+      fb.innerHTML = `<div class="label">${correct?"✓ Correto!":"✗ Quase!"}</div>${q.ex}`;
+      block.appendChild(fb);
+      handleAnswer(correct);
+    });
+    block.appendChild(b);
+  });
+  c.appendChild(block);
+}
+
+/* ---------- Find the intruder ---------- */
+function renderIntruder(c){
+  const q = currentStage.questions[stageCursor];
+  const wrap = document.createElement("div");
+  wrap.innerHTML = `<div class="q-num">Desafio ${stageCursor+1}/${currentStage.questions.length}</div>
+    <div class="q-text">${q.title}</div>
+    <p class="muted" style="font-size:13px;margin-bottom:8px">Clica no cartão que é o INTRUSO (não pertence ao grupo).</p>`;
+  const grid = document.createElement("div");
+  grid.className = "intruder-grid";
+  ["left","right"].forEach(side=>{
+    const card = document.createElement("div");
+    card.className = "intruder-card";
+    card.innerHTML = `<h4>Cartão ${q[side].label}</h4><p>${q[side].text}</p>`;
+    card.addEventListener("click", ()=>{
+      const chosen = side;
+      const correct = chosen===q.answer;
+      card.classList.add("selected");
+      $$(grid, ".intruder-card").forEach(x=>{x.style.pointerEvents="none"});
+      const fb = document.createElement("div");
+      fb.className = "feedback " + (correct?"ok":"no");
+      fb.innerHTML = `<div class="label">${correct?"✓ Intruso encontrado!":"✗ Não era este."}</div>${q.ex}`;
+      wrap.appendChild(fb);
+      handleAnswer(correct);
+    });
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+  c.appendChild(wrap);
+}
+
+/* ---------- Memory Match ---------- */
+function renderMatch(c){
+  const wrap = document.createElement("div");
+  wrap.innerHTML = `<div class="q-num">Memory Match</div>
+    <p class="muted" style="font-size:13px;margin-bottom:8px">Seleciona um item à esquerda e depois o seu par à direita.</p>`;
+  const match = document.createElement("div");
+  match.className = "match";
+  // coluna esquerda (arquiteturas) - ordem aleatória estável
+  const lefts = currentStage.pairs.map((p,i)=>({...p, idx:i, side:"L"}));
+  const rights = currentStage.pairs.map((p,i)=>({...p, idx:i, side:"R"}));
+  shuffle(lefts); shuffle(rights);
+  let selLeft = null, selRight = null, matchedCount = 0;
+
+  const leftCol = document.createElement("div");
+  leftCol.className = "col";
+  const rightCol = document.createElement("div");
+  rightCol.className = "col";
+
+  lefts.forEach(item=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.idx = item.idx;
+    card.textContent = item.left;
+    card.addEventListener("click", ()=>{
+      if(card.classList.contains("matched")) return;
+      $$(".card.sel", leftCol).forEach(x=>x.classList.remove("sel"));
+      card.classList.add("sel");
+      selLeft = {idx:item.idx, el:card};
+      tryMatch();
+    });
+    leftCol.appendChild(card);
+  });
+  rights.forEach(item=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.idx = item.idx;
+    card.textContent = item.right;
+    card.addEventListener("click", ()=>{
+      if(card.classList.contains("matched")) return;
+      $$(".card.sel", rightCol).forEach(x=>x.classList.remove("sel"));
+      card.classList.add("sel");
+      selRight = {idx:item.idx, el:card};
+      tryMatch();
+    });
+    rightCol.appendChild(card);
+  });
+
+  function tryMatch(){
+    if(!selLeft || !selRight) return;
+    const ok = selLeft.idx===selRight.idx;
+    if(ok){
+      selLeft.el.classList.remove("sel");
+      selRight.el.classList.remove("sel");
+      selLeft.el.classList.add("matched");
+      selRight.el.classList.add("matched");
+      matchedCount++;
+      stageScoreThis += 20;
+      STATE.score += 20;
+      updateHUD();
+      toast("Par correto!","+20 pts", true);
+      if(matchedCount===currentStage.pairs.length){
+        const fb = document.createElement("div");
+        fb.className = "feedback ok";
+        fb.innerHTML = `<div class="label">✓ Todos os pares corretos!</div>+20 bónus por completar a fase.`;
+        wrap.appendChild(fb);
+        stageScoreThis += 20; STATE.score += 20; updateHUD();
+        finishStage();
+      }
+    } else {
+      selLeft.el.classList.add("shake");
+      selRight.el.classList.add("shake");
+      STATE.lives = Math.max(0, STATE.lives-1);
+      updateHUD();
+      toast("Par incorreto","-1 vida", false);
+      setTimeout(()=>{
+        selLeft && selLeft.el.classList.remove("shake","sel");
+        selRight && selRight.el.classList.remove("shake","sel");
+        selLeft = null; selRight = null;
+      }, 350);
+      if(STATE.lives<=0){ endGame(false); }
+    }
+  }
+  match.appendChild(leftCol);
+  match.appendChild(rightCol);
+  wrap.appendChild(match);
+  c.appendChild(wrap);
+}
+
+/* ---------- Equation builder ---------- */
+function renderEquation(c){
+  const q = currentStage.questions[stageCursor];
+  const wrap = document.createElement("div");
+  wrap.innerHTML = `<div class="q-num">Constrói a equação</div>
+    <p class="lead" style="margin-bottom:6px">${q.desc}</p>`;
+  const eq = document.createElement("div");
+  eq.className = "eq";
+  // y = [slot1] [slot2] + [slot3]
+  eq.innerHTML = `
+    <span>y</span><span class="op">=</span>
+    <span class="slot" data-pos="0"></span>
+    <span class="slot" data-pos="1"></span>
+    <span class="op">+</span>
+    <span class="slot" data-pos="2"></span>
+  `;
+  wrap.appendChild(eq);
+  const tokensWrap = document.createElement("div");
+  tokensWrap.className = "tokens";
+  const usedTokens = new Set();
+  q.pool.forEach((t,i)=>{
+    const tk = document.createElement("div");
+    tk.className = "token";
+    tk.textContent = t;
+    tk.dataset.val = t;
+    tk.addEventListener("click", ()=>{
+      if(usedTokens.has(i)) return;
+      // find first empty slot
+      const empty = [...eq.querySelectorAll(".slot")].find(s=>!s.classList.contains("filled"));
+      if(!empty) return;
+      empty.textContent = t;
+      empty.classList.add("filled");
+      empty.dataset.val = t;
+      usedTokens.add(i);
+      tk.classList.add("used");
+      checkEquation();
+    });
+    tokensWrap.appendChild(tk);
+  });
+  wrap.appendChild(tokensWrap);
+
+  const slots = eq.querySelectorAll(".slot");
+  slots.forEach(s=>{
+    s.addEventListener("click", ()=>{
+      if(!s.classList.contains("filled")) return;
+      // remove token
+      const v = s.dataset.val;
+      s.textContent="";
+      s.classList.remove("filled");
+      delete s.dataset.val;
+      // re-enable token
+      [...tokensWrap.children].forEach(tk=>{
+        if(tk.dataset.val===v && tk.classList.contains("used")){
+          tk.classList.remove("used");
+          // remove from usedTokens by index
+          for(const idx of usedTokens){
+            if(tokensWrap.children[idx]===tk){ usedTokens.delete(idx); break; }
+          }
+        }
+      });
+    });
+  });
+
+  function checkEquation(){
+    const filled = [...slots].filter(s=>s.classList.contains("filled"));
+    if(filled.length!==3) return;
+    const vals = [...slots].map(s=>s.dataset.val);
+    const ok = vals.every((v,i)=>v===q.target[i]);
+    if(ok){
+      const fb = document.createElement("div");
+      fb.className = "feedback ok";
+      fb.innerHTML = `<div class="label">✓ Equação correta!</div>${q.ex}`;
+      wrap.appendChild(fb);
+      handleAnswer(true);
+    } else {
+      $$(".slot", wrap).forEach(s=>s.parentElement.classList.add("shake"));
+      setTimeout(()=>$$(".eq", wrap).forEach(e=>e.classList.remove("shake")), 350);
+      toast("Equação incorreta","Tenta novamente", false);
+    }
+  }
+
+  c.appendChild(wrap);
+}
+
+/* ---------- Order (drag/drop) ---------- */
+function renderOrder(c){
+  const q = currentStage.questions[stageCursor];
+  const wrap = document.createElement("div");
+  wrap.innerHTML = `<div class="q-num">Ordena o ciclo de treino</div>
+    <p class="muted" style="font-size:13px;margin-bottom:8px">Arrasta os itens para cima/baixo ou usa ↑/↓ para os reordenar. Depois clica em "Validar".</p>`;
+  const list = document.createElement("div");
+  list.className = "order-list";
+  const items = q.items.map((it,i)=>({...it, key:i}));
+  shuffle(items);
+  items.forEach((it)=>{
+    const row = document.createElement("div");
+    row.className = "order-item";
+    row.draggable = true;
+    row.innerHTML = `<span class="grip">≡</span><span class="code">${it.code}</span><span class="muted">— ${it.desc}</span>`;
+    list.appendChild(row);
+  });
+  wrap.appendChild(list);
+
+  // drag events
+  let dragEl = null;
+  list.addEventListener("dragstart", e=>{
+    dragEl = e.target.closest(".order-item");
+    dragEl.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+  });
+  list.addEventListener("dragend", e=>{
+    const t = e.target.closest(".order-item");
+    if(t) t.classList.remove("dragging");
+    dragEl = null;
+  });
+  list.addEventListener("dragover", e=>{
+    e.preventDefault();
+    const after = getDragAfter(list, e.clientY);
+    if(!dragEl) return;
+    if(after==null) list.appendChild(dragEl);
+    else list.insertBefore(dragEl, after);
+  });
+  function getDragAfter(container, y){
+    const els = [...container.querySelectorAll(".order-item:not(.dragging)")];
+    return els.reduce((closest, child)=>{
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height/2;
+      if(offset < 0 && offset > closest.offset) return {offset, element:child};
+      return closest;
+    }, {offset:-Infinity}).element;
+  }
+
+  const validate = document.createElement("button");
+  validate.className = "btn primary";
+  validate.textContent = "Validar ordem";
+  validate.addEventListener("click", ()=>{
+    const order = [...list.querySelectorAll(".order-item")].map(el=>el.querySelector(".code").textContent);
+    const expected = q.answerOrder.map(i=>q.items[i].code);
+    const ok = order.every((v,i)=>v===expected[i]);
+    const fb = document.createElement("div");
+    fb.className = "feedback " + (ok?"ok":"no");
+    if(ok){
+      fb.innerHTML = `<div class="label">✓ Ciclo correto!</div>Sequência: zero_grad → forward → loss → backward → step. É a base do treino em PyTorch.`;
+      wrap.appendChild(fb);
+      handleAnswer(true);
+    } else {
+      fb.innerHTML = `<div class="label">✗ Ainda não está certo.</div>Ordem correta: 1) optimizer.zero_grad() 2) outputs = model(X) 3) loss = criterion(outputs, y) 4) loss.backward() 5) optimizer.step()`;
+      wrap.appendChild(fb);
+      STATE.lives = Math.max(0, STATE.lives-1);
+      updateHUD();
+      toast("Ordem incorreta","-1 vida", false);
+      if(STATE.lives<=0) endGame(false);
+    }
+  });
+  wrap.appendChild(validate);
+  wrap.appendChild(document.createElement("div")); // spacer
+  c.appendChild(wrap);
+}
+
+/* ---------- Handle answer ---------- */
+function handleAnswer(correct){
+  if(correct){
+    stageScoreThis += 30;
+    STATE.score += 30;
+    updateHUD();
+    toast("Boa!","+30 pts", true);
+  } else {
+    STATE.lives = Math.max(0, STATE.lives-1);
+    updateHUD();
+    toast("Incorreto","-1 vida", false);
+    if(STATE.lives<=0){ endGame(false); return; }
+  }
+  $("#btn-next").style.display = "";
+  $("#btn-next").textContent = (stageCursor+1>=totalSteps(currentStage)) ? "Concluir Fase ✓" : "Próximo →";
+}
+
+function finishStage(){
+  STATE.perStageScore[currentStage.id] = (STATE.perStageScore[currentStage.id]||0) + stageScoreThis;
+  STATE.completed[currentStage.id] = true;
+  if(currentStage.id+1 <= STAGES.length) STATE.unlocked = Math.max(STATE.unlocked, currentStage.id+1);
+  save();
+  setTimeout(()=>{ toast("Fase concluída!", `+${stageScoreThis} pts`, true); }, 600);
+  $("#btn-next").style.display = "";
+  $("#btn-next").textContent = "Voltar ao Mapa →";
+  $("#btn-next").onclick = ()=>{ show("screen-map"); renderMap(); };
+}
+
+/* ---------- Navigation ---------- */
+$("#btn-start").addEventListener("click", ()=>{
+  show("screen-map"); renderMap();
+});
+$("#btn-reset").addEventListener("click", ()=>{
+  if(confirm("Reiniciar todo o progresso?")){
+    localStorage.removeItem("missao-dl-semana1");
+    STATE.score=0; STATE.lives=3; STATE.level=1; STATE.unlocked=1;
+    STATE.completed={}; STATE.perStageScore={};
+    updateHUD();
+    toast("Progresso reiniciado","Boa sorte!", true);
+    renderMap();
+  }
+});
+$("#btn-exit").addEventListener("click", ()=>{ show("screen-map"); renderMap(); });
+$("#btn-prev").addEventListener("click", ()=>{
+  if(stageCursor>0){ stageCursor--; renderStageStep(); }
+});
+$("#btn-next").addEventListener("click", ()=>{
+  // se a fase já estiver marcada como concluída (e o botão foi remapeado)
+  if($("#btn-next").onclick){ $("#btn-next").onclick(); return; }
+  if(stageCursor+1 < totalSteps(currentStage)){
+    stageCursor++;
+    renderStageStep();
+  } else {
+    finishStage();
+  }
+});
+$("#btn-replay").addEventListener("click", ()=>{
+  STATE.score=0; STATE.lives=3; STATE.level=1; STATE.unlocked=1;
+  STATE.completed={}; STATE.perStageScore={};
+  save(); updateHUD();
+  show("screen-map"); renderMap();
+});
+$("#btn-review").addEventListener("click", ()=>{
+  const r = $("#review-content");
+  r.classList.toggle("hidden");
+  if(!r.classList.contains("hidden")){
+    r.innerHTML = renderReview();
+  }
+});
+
+function renderReview(){
+  return `
+  <div class="screen" style="background:rgba(0,0,0,.18)">
+    <h3 style="margin-top:0">📚 Resumo dos Conceitos</h3>
+    <p><b>Deep Learning</b> — subcampo do ML que usa redes neurais com múltiplas camadas ocultas (n &gt; 2) para aprender representações hierárquicas dos dados.</p>
+    <p style="margin-top:8px"><b>IA Generativa</b> — sistemas que <i>criam</i> conteúdo novo (texto, imagem, áudio, vídeo, código) em vez de apenas classificar.</p>
+    <p style="margin-top:8px"><b>Arquiteturas:</b> CNN (visão), RNN/LSTM/GRU (sequências), Transformers (BERT, GPT, ViT), GANs (geração adversarial), Autoencoders/VAE (representações latentes).</p>
+    <p style="margin-top:8px"><b>Neurónio artificial:</b> <code class="inline">y = Wx + b</code> — W (pesos), x (entrada), b (viés).</p>
+    <p style="margin-top:8px"><b>Pilar 1 — Álgebra Linear:</b> vetores, matrizes, tensores (mapas de características de CNN: largura × altura × canais × lote).</p>
+    <p style="margin-top:8px"><b>Pilar 2 — Cálculo:</b> descida do gradiente <code class="inline">θ_{t+1} = θ_t − η·∇θ J(θ)</code>; regra da cadeia → retropropagação.</p>
+    <p style="margin-top:8px"><b>Backpropagation:</b> 1) passagem direta → 2) calcular perda → 3) passagem inversa (gradientes) → 4) atualizar pesos.</p>
+    <p style="margin-top:8px"><b>Ciclo PyTorch:</b></p>
+    <pre style="background:rgba(0,0,0,.35);padding:12px;border-radius:8px;font-size:12.5px;overflow:auto;margin-top:6px">for epoch in range(epochs):
+  optimizer.zero_grad()      # 1. reiniciar gradientes
+  outputs = model(X)         # 2. passagem direta
+  loss = criterion(outputs,y)# 3. calcular perda
+  loss.backward()            # 4. retropropagação
+  optimizer.step()           # 5. atualizar pesos</pre>
+    <p style="margin-top:8px"><b>Projeto Final:</b> chatbot generativo específico de domínio com API (ex.: Google Gemini), multimodal (texto + imagem/áudio), com testes e considerações éticas.</p>
+  </div>`;
+}
+
+/* ---------- Fim do jogo ---------- */
+function endGame(success){
+  $("#stage-content").innerHTML = success ? `<div class="feedback ok"><div class="label">🎉 Missão concluída!</div></div>` : `<div class="feedback no"><div class="label">Ficaste sem vidas!</div>Mas não desistas — revisa o material e tenta outra vez. O importante é fixar os conceitos.</div>`;
+  setTimeout(()=>{ showFinal(); }, 1200);
+}
+function showFinal(){
+  show("screen-final");
+  $("#final-score").textContent = STATE.score + " pts";
+  const max = STAGES.length * (30*5 + 20*5 + 20); // estimativa
+  let stars = 1;
+  if(STATE.score >= max*0.4) stars = 2;
+  if(STATE.score >= max*0.7) stars = 3;
+  $("#final-stars").textContent = "★".repeat(stars) + "☆".repeat(3-stars);
+  const completedCount = Object.keys(STATE.completed).length;
+  $("#final-summary").innerHTML = `
+    <div>Fases concluídas: <b>${completedCount}/${STAGES.length}</b></div>
+    <div>Vidas restantes: <b>${STATE.lives}</b></div>
+    <div>Pontuação total: <b>${STATE.score}</b> pts</div>
+  `;
+  $("#cert").innerHTML = `
+    <b>🎓 Certificado de Conclusão — Semana 1</b><br>
+    O jogador completou a <i>Missão Deep Learning</i> com ${STATE.score} pontos e ${completedCount} de ${STAGES.length} fases vencidas.
+    Cobriu: conceitos IA/ML/DL/Generativa, arquiteturas, neurónio artificial, pilares matemáticos, retropropagação e ciclo de treino em PyTorch.
+    Recomenda-se agora a leitura do material oficial da Semana 1 e o início do planeamento do Projeto Final (chatbot generativo por domínio).
+  `;
+}
+
+/* ---------- Helpers ---------- */
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+/* ---------- Init ---------- */
+load();
+show("screen-start");
+updateHUD();
+</script>
+</body>
+</html>
