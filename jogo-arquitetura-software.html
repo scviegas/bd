@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquiteto em Ação — O Desafio de Software</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-1: #0b1020;
+    --bg-2: #131a33;
+    --bg-3: #1c2547;
+    --accent: #22d3ee;
+    --accent-2: #a78bfa;
+    --accent-3: #f472b6;
+    --success: #34d399;
+    --danger: #fb7185;
+    --warning: #fbbf24;
+    --text: #e6ebff;
+    --muted: #94a3b8;
+    --card: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+  }
+  html, body {
+    height: 100%;
+    font-family: 'Segoe UI', 'Trebuchet MS', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 700px at 10% -10%, rgba(34,211,238,0.12), transparent 60%),
+      radial-gradient(900px 600px at 100% 0%, rgba(167,139,250,0.12), transparent 60%),
+      radial-gradient(700px 500px at 50% 120%, rgba(244,114,182,0.08), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  /* decorative grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, rgba(34,211,238,0.06), rgba(167,139,250,0.06));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 22px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-icon {
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-radius: 12px;
+    font-size: 22px;
+    box-shadow: 0 6px 20px rgba(34,211,238,0.25);
+  }
+  .brand-text h1 {
+    font-size: 18px;
+    letter-spacing: 0.3px;
+    font-weight: 800;
+  }
+  .brand-text p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .hud {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .hud-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .hud-chip .icon { font-size: 14px; }
+  .hud-chip.score { color: var(--warning); }
+  .hud-chip.stage { color: var(--accent); }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+  }
+  .progress-top {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(.2,.8,.3,1);
+    box-shadow: 0 0 16px rgba(34,211,238,0.45);
+  }
+
+  /* SCREENS */
+  .screen { display: none; animation: fadeIn .4s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* WELCOME */
+  .welcome {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 36px 28px;
+    text-align: center;
+  }
+  .welcome .emoji-hero {
+    font-size: 64px;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 8px 20px rgba(34,211,238,0.35));
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .welcome h2 {
+    font-size: 28px;
+    margin: 10px 0 6px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+  .welcome .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 22px;
+    max-width: 560px;
+    margin-left: auto; margin-right: auto;
+    line-height: 1.6;
+  }
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 22px 0 28px;
+  }
+  .rule-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: left;
+  }
+  .rule-card .ric {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  .rule-card h4 {
+    font-size: 13px; margin-bottom: 4px; color: var(--accent);
+  }
+  .rule-card p {
+    font-size: 12px; color: var(--muted); line-height: 1.5;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .2s ease;
+    font-family: inherit;
+    color: #0b1020;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 8px 24px rgba(34,211,238,0.3);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(34,211,238,0.4); }
+  .btn:active { transform: translateY(0); }
+  .btn.secondary {
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: none;
+  }
+  .btn.secondary:hover { background: rgba(255,255,255,0.1); }
+  .btn.ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    box-shadow: none;
+  }
+  .btn.ghost:hover { color: var(--text); border-color: var(--accent); }
+
+  /* STAGE MAP */
+  .stage-map {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .stage-card {
+    position: relative;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    cursor: pointer;
+    transition: transform .2s ease, border-color .2s ease;
+    overflow: hidden;
+  }
+  .stage-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--stage-color, var(--accent)), transparent 60%);
+    opacity: 0.12;
+    pointer-events: none;
+  }
+  .stage-card:hover { transform: translateY(-4px); border-color: var(--stage-color, var(--accent)); }
+  .stage-card.locked { opacity: 0.45; cursor: not-allowed; }
+  .stage-card.locked:hover { transform: none; }
+  .stage-card.completed { border-color: var(--success); }
+  .stage-num {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .stage-icon { font-size: 32px; margin-bottom: 8px; }
+  .stage-card h3 {
+    font-size: 15px; margin-bottom: 6px; font-weight: 700;
+  }
+  .stage-card p {
+    font-size: 12px; color: var(--muted); line-height: 1.5;
+  }
+  .stage-badge {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px;
+    background: rgba(0,0,0,0.4);
+  }
+  .stage-card.completed .stage-badge { background: var(--success); color: #052e1a; }
+  .stage-card.locked .stage-badge { background: rgba(255,255,255,0.1); color: var(--muted); }
+  .stage-card:not(.locked):not(.completed) .stage-badge { background: var(--stage-color, var(--accent)); color: #05121a; }
+
+  /* QUIZ SCREEN */
+  .quiz-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 26px 24px;
+    margin-bottom: 18px;
+  }
+  .quiz-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .quiz-stage-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: rgba(34,211,238,0.1);
+    border: 1px solid rgba(34,211,238,0.25);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600; color: var(--accent);
+  }
+  .quiz-q-counter { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .question {
+    font-size: 18px;
+    line-height: 1.55;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .question .qmark {
+    color: var(--accent-2);
+    margin-right: 8px;
+  }
+  .options {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .15s ease;
+    font-size: 15px;
+    text-align: left;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .option:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: rgba(34,211,238,0.07);
+    transform: translateX(4px);
+  }
+  .option .letter {
+    width: 30px; height: 30px;
+    flex-shrink: 0;
+    display: grid; place-items: center;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 14px;
+  }
+  .option.correct {
+    border-color: var(--success);
+    background: rgba(52,211,153,0.1);
+  }
+  .option.correct .letter { background: var(--success); color: #052e1a; }
+  .option.wrong {
+    border-color: var(--danger);
+    background: rgba(251,113,133,0.1);
+  }
+  .option.wrong .letter { background: var(--danger); color: #2a0712; }
+  .option.disabled { cursor: not-allowed; opacity: 0.85; }
+
+  /* PROFESSOR BUBBLE */
+  .professor {
+    display: flex;
+    gap: 14px;
+    background: rgba(167,139,250,0.06);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 14px;
+    align-items: flex-start;
+  }
+  .prof-avatar {
+    width: 52px; height: 52px;
+    flex-shrink: 0;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
+    border-radius: 14px;
+    font-size: 28px;
+    box-shadow: 0 6px 16px rgba(167,139,250,0.3);
+  }
+  .prof-content { flex: 1; }
+  .prof-name {
+    font-size: 12px; font-weight: 700; color: var(--accent-2);
+    margin-bottom: 4px;
+  }
+  .prof-text {
+    font-size: 14px; line-height: 1.55; color: var(--text);
+  }
+  .prof-text .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .prof-text .tag.correct { background: var(--success); color: #052e1a; }
+  .prof-text .tag.wrong { background: var(--danger); color: #2a0712; }
+
+  .quiz-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 18px;
+  }
+
+  /* STAGE COMPLETE */
+  .stage-complete {
+    text-align: center;
+    padding: 40px 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--border);
+    border-radius: 22px;
+  }
+  .stage-complete .big-emoji { font-size: 60px; margin-bottom: 12px; }
+  .stage-complete h2 {
+    font-size: 24px; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .stage-complete .stage-score {
+    font-size: 14px; color: var(--muted); margin-bottom: 22px;
+  }
+  .stage-complete .stage-score b { color: var(--warning); font-size: 16px; }
+
+  /* RESULTS */
+  .results {
+    text-align: center;
+    padding: 40px 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .results::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(600px 300px at 50% -20%, rgba(244,114,182,0.15), transparent 60%);
+    pointer-events: none;
+  }
+  .results > * { position: relative; z-index: 1; }
+  .final-grade {
+    font-size: 80px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    line-height: 1;
+    margin: 8px 0;
+    text-shadow: 0 0 40px rgba(167,139,250,0.3);
+  }
+  .final-grade .of {
+    font-size: 32px; color: var(--muted);
+    -webkit-text-fill-color: var(--muted);
+  }
+  .results h2 {
+    font-size: 26px; margin-bottom: 10px;
+  }
+  .results .verdict {
+    font-size: 15px; color: var(--muted); max-width: 520px;
+    margin: 0 auto 22px; line-height: 1.6;
+  }
+  .breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 22px 0;
+    text-align: left;
+  }
+  .breakdown .bd-item {
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .bd-item .bd-name { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .bd-item .bd-val { font-size: 16px; font-weight: 700; }
+  .bd-val.good { color: var(--success); }
+  .bd-val.mid { color: var(--warning); }
+  .bd-val.bad { color: var(--danger); }
+
+  .actions-row {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  /* Confetti */
+  .confetti {
+    position: fixed; top: -10px;
+    width: 8px; height: 14px;
+    opacity: 0.9;
+    z-index: 999;
+    pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    header { flex-direction: column; gap: 10px; align-items: flex-start; }
+    .hud { flex-wrap: wrap; }
+    .question { font-size: 16px; }
+    .welcome h2 { font-size: 22px; }
+    .final-grade { font-size: 60px; }
+  }
+
+  /* Accessibility: focus */
+  button:focus-visible, .option:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">🏛️</div>
+      <div class="brand-text">
+        <h1>Arquiteto em Ação</h1>
+        <p>Desafio de Arquitetura de Software · Jogo Educativo</p>
+      </div>
+    </div>
+    <div class="hud" id="hud" style="display:none">
+      <div class="hud-chip stage"><span class="icon">📍</span><span id="hudStage">Fase 1</span></div>
+      <div class="hud-chip score"><span class="icon">⭐</span><span id="hudScore">0</span> pts</div>
+    </div>
+  </header>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-top">
+      <span id="progressLabel">Início</span>
+      <span id="progressCount">0 / 25 perguntas</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- ============== WELCOME SCREEN ============== -->
+  <section class="screen active" id="screen-welcome">
+    <div class="welcome">
+      <div class="emoji-hero">🏗️</div>
+      <h2>Arquiteto em Ação</h2>
+      <p class="subtitle">
+        Você é um estudante de Engenharia de Software prestes a apresentar o <b>Desafio de Arquitetura</b> que vale <b>6 pontos</b>. Percorra as <b>5 fases</b> do desafio, responda às perguntas do Professor e prove que você sabe planejar um sistema antes de programar!
+      </p>
+
+      <div class="rules-grid">
+        <div class="rule-card">
+          <div class="ric">🎯</div>
+          <h4>Objetivo</h4>
+          <p>Acerte o máximo de perguntas sobre cada fase do desafio.</p>
+        </div>
+        <div class="rule-card">
+          <div class="ric">🧠</div>
+          <h4>5 Fases</h4>
+          <p>Introdução, Tecnologias, Arquitetura, Diagramas e Entrega.</p>
+        </div>
+        <div class="rule-card">
+          <div class="ric">⭐</div>
+          <h4>Pontuação</h4>
+          <p>Cada acerto vale pontos. No final, você recebe sua nota de 0 a 6.</p>
+        </div>
+        <div class="rule-card">
+          <div class="ric">💡</div>
+          <h4>Dica do Professor</h4>
+          <p>Cada resposta vem com a explicação, como numa aula particular.</p>
+        </div>
+      </div>
+
+      <button class="btn" id="btnStart">▶️ Começar o Desafio</button>
+    </div>
+  </section>
+
+  <!-- ============== STAGE MAP ============== -->
+  <section class="screen" id="screen-map">
+    <div class="welcome" style="padding: 24px 22px;">
+      <h2 style="font-size:22px;">📍 Mapa do Desafio</h2>
+      <p class="subtitle" style="margin-bottom:18px;">
+        Escolha uma fase para começar. Conclua uma fase para destravar a próxima.
+      </p>
+      <div class="stage-map" id="stageMap"></div>
+      <div class="actions-row">
+        <button class="btn ghost" id="btnBackWelcome">← Voltar ao início</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== QUIZ SCREEN ============== -->
+  <section class="screen" id="screen-quiz">
+    <div class="quiz-card">
+      <div class="quiz-header">
+        <span class="quiz-stage-tag" id="qStageTag">📍 Fase 1 · Introdução</span>
+        <span class="quiz-q-counter" id="qCounter">Pergunta 1 de 5</span>
+      </div>
+      <div class="question" id="questionText"></div>
+      <div class="options" id="optionsList"></div>
+      <div class="professor" id="professorBox" style="display:none">
+        <div class="prof-avatar">👨‍🏫</div>
+        <div class="prof-content">
+          <div class="prof-name">PROFESSOR</div>
+          <div class="prof-text" id="profText"></div>
+        </div>
+      </div>
+      <div class="quiz-footer">
+        <button class="btn ghost" id="btnQuit">← Sair</button>
+        <button class="btn secondary" id="btnNext" disabled>Próxima →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== STAGE COMPLETE ============== -->
+  <section class="screen" id="screen-stageComplete">
+    <div class="stage-complete">
+      <div class="big-emoji" id="scEmoji">🎉</div>
+      <h2 id="scTitle">Fase Concluída!</h2>
+      <p class="stage-score">Você acertou <b id="scCorrect">0</b> de <b id="scTotal">5</b> perguntas.</p>
+      <div id="scMessage" style="font-size:14px; color:var(--muted); margin-bottom:22px; max-width:520px; margin-left:auto; margin-right:auto; line-height:1.6;"></div>
+      <div class="actions-row">
+        <button class="btn ghost" id="scMap">📍 Ver mapa</button>
+        <button class="btn" id="scNext">Continuar →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FINAL RESULTS ============== -->
+  <section class="screen" id="screen-results">
+    <div class="results">
+      <div style="font-size:48px;">🏆</div>
+      <h2>Desafio Concluído!</h2>
+      <div class="final-grade"><span id="finalGrade">0.0</span><span class="of">/6.0</span></div>
+      <p class="verdict" id="finalVerdict"></p>
+
+      <div class="breakdown" id="breakdown"></div>
+
+      <div class="actions-row">
+        <button class="btn" id="btnRestart">🔄 Jogar novamente</button>
+        <button class="btn ghost" id="btnReview">📚 Ver dicas finais</button>
+      </div>
+
+      <div id="reviewBox" style="display:none; margin-top:22px; text-align:left;
+        background:rgba(255,255,255,0.03); border:1px solid var(--border);
+        border-radius:14px; padding:18px;">
+        <h3 style="font-size:15px; color:var(--accent-2); margin-bottom:10px;">📚 Resumo das 5 fases do desafio real</h3>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.7; padding-left:18px;">
+          <li><b>1. Introdução:</b> explicar o sistema, usuários, problemas e regras de negócio.</li>
+          <li><b>2. Tecnologias:</b> listar e <b>justificar</b> as escolhas (custo, segurança, manutenção, equipe).</li>
+          <li><b>3. Arquitetura:</b> escolher um estilo (camadas, microsserviços...) coerente com o sistema.</li>
+          <li><b>4. Diagramas:</b> apresentar obrigatoriamente <b>componentes</b> e <b>implantação</b> (+ classe opcional).</li>
+          <li><b>5. Entrega:</b> usar o modelo oficial, converter em PDF, entregar até o final da semana 5.</li>
+        </ul>
+        <p style="font-size:12px; color:var(--accent); margin-top:10px;">
+          💡 "O desafio não é construir o software, mas demonstrar como você planejaria sua construção." — Professor
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   GAME DATA: 5 STAGES, 5 QUESTIONS PER STAGE
+   ============================================================ */
+const STAGES = [
+  {
+    id: 1,
+    name: 'Introdução',
+    icon: '📝',
+    color: '#22d3ee',
+    desc: 'Definir o sistema, os usuários, o problema e as regras de negócio.',
+    questions: [
+      {
+        q: 'Antes de escrever a primeira linha de código, o que precisamos pensar?',
+        opts: [
+          'A cor dos botões da interface',
+          'A arquitetura do software: como o sistema será organizado',
+          'O nome do arquivo .py principal',
+          'O preço que será cobrado pelo projeto'
+        ],
+        correct: 1,
+        explain: 'Desenvolver software não é só abrir o VS Code e programar. Antes disso, precisamos pensar em como o sistema será organizado e como seus componentes vão se comunicar.'
+      },
+      {
+        q: 'Na analogia do professor, a arquitetura de software é comparada a:',
+        opts: [
+          'Uma receita de bolo',
+          'A planta de uma casa, antes de colocar os tijolos',
+          'Um manual do carro',
+          'Uma lista de supermercado'
+        ],
+        correct: 1,
+        explain: 'Assim como uma casa precisa de planta (quartos, banheiros, elétrica, hidráulica) antes dos tijolos, o software precisa de arquitetura antes do código.'
+      },
+      {
+        q: 'No sistema de agendamento de consultas, qual é uma BOA regra de negócio?',
+        opts: [
+          'O site deve ter cores suaves',
+          'O sistema deve ser bonito',
+          'Um médico não pode ter duas consultas no mesmo horário',
+          'O sistema deve ter um logotipo moderno'
+        ],
+        correct: 2,
+        explain: 'Regra de negócio define COMPORTAMENTO. "Um médico não pode ter duas consultas no mesmo horário" é uma restrição real do domínio. As outras opções são questões visuais, não de regras.'
+      },
+      {
+        q: 'O que a introdução do trabalho DEVE explicar?',
+        opts: [
+          'O que o sistema fará, quem vai utilizá-lo e quais problemas resolve',
+          'Apenas o nome do sistema',
+          'A lista completa de arquivos .py',
+          'O orçamento detalhado do projeto'
+        ],
+        correct: 0,
+        explain: 'A introdução precisa dizer o que o sistema faz, quem usa e que problema resolve — e apresentar as regras de negócio. Não é só "ter cadastro e agendamento".'
+      },
+      {
+        q: 'Segundo o professor, por que pensar em um problema real ajuda no desafio?',
+        opts: [
+          'Porque o professor só aceita projetos reais',
+          'Porque quanto melhor você compreender o problema, mais fácil será projetar a solução',
+          'Porque problemas reais são sempre simples',
+          'Porque problemas inventados não podem ser entregues'
+        ],
+        correct: 1,
+        explain: 'A dica do professor: pense em um problema real (loja, escola, biblioteca, restaurante, clínica). Quanto melhor você entende o problema, mais fácil projetar a solução.'
+      }
+    ]
+  },
+  {
+    id: 2,
+    name: 'Tecnologias',
+    icon: '⚙️',
+    color: '#a78bfa',
+    desc: 'Listar e JUSTIFICAR as tecnologias escolhidas para o projeto.',
+    questions: [
+      {
+        q: 'Por que NÃO basta apresentar uma lista de tecnologias?',
+        opts: [
+          'Porque a lista fica feia no documento',
+          'Porque o professor quer texto corrido',
+          'Porque é preciso justificar por que cada escolha faz sentido para o cenário',
+          'Porque tecnologias não devem ser citadas'
+        ],
+        correct: 2,
+        explain: 'Não basta listar. É preciso justificar: por que PostgreSQL e não MongoDB? Por que Django e não Spring Boot? As escolhas devem atender às necessidades do sistema.'
+      },
+      {
+        q: 'Qual combinação seria adequada para o backend de um sistema web de clínica?',
+        opts: [
+          'Apenas HTML e CSS',
+          'MS Paint e Bloco de Notas',
+          'Python com Django + PostgreSQL no banco de dados',
+          'PowerPoint e Excel'
+        ],
+        correct: 2,
+        explain: 'Python/Django para backend + PostgreSQL para dados é uma combinação clássica e sólida para sistemas web. HTML/CSS sozinhos não constituem backend.'
+      },
+      {
+        q: 'Segundo o professor, o que é considerado ao escolher tecnologia nas empresas?',
+        opts: [
+          'Apenas o desempenho',
+          'Apenas o que está em alta no YouTube',
+          'Custo, segurança, manutenção e conhecimento da equipe',
+          'A cor do logotipo do framework'
+        ],
+        correct: 2,
+        explain: 'Curiosidade do professor: nas empresas, escolher tecnologia considera não só desempenho, mas também custo, segurança, manutenção e o conhecimento da equipe.'
+      },
+      {
+        q: 'Existe uma tecnologia que seja a melhor para TODOS os projetos?',
+        opts: [
+          'Sim, sempre Python',
+          'Sim, sempre JavaScript',
+          'Não. Existe a que faz mais sentido para determinado cenário',
+          'Sim, a mais cara e nova do mercado'
+        ],
+        correct: 2,
+        explain: 'Não existe bala de prata. A melhor tecnologia depende do cenário. Por isso a justificativa é tão importante no trabalho.'
+      },
+      {
+        q: 'Por que escolher PostgreSQL em vez de MongoDB para um sistema de consultas?',
+        opts: [
+          'Porque PostgreSQL é mais bonito',
+          'Porque PostgreSQL é melhor para dados relacionais e com integridade (consultas, pacientes, médicos)',
+          'Porque MongoDB não existe mais',
+          'Porque PostgreSQL é sempre mais barato'
+        ],
+        correct: 1,
+        explain: 'Consultas médicas envolvem relações fortes (paciente → médico → horário). PostgreSQL (relacional) preserva integridade. MongoDB seria mais aderente a dados sem esquema rígido.'
+      }
+    ]
+  },
+  {
+    id: 3,
+    name: 'Arquitetura',
+    icon: '🏛️',
+    color: '#f472b6',
+    desc: 'Escolher e justificar a arquitetura, coerente com o sistema.',
+    questions: [
+      {
+        q: 'Na arquitetura em camadas, quais são as camadas típicas?',
+        opts: [
+          'Frente, meio e fundo',
+          'Apresentação, lógica de negócio e acesso aos dados',
+          'Início, meio e fim',
+          'HTML, CSS e JavaScript'
+        ],
+        correct: 1,
+        explain: 'A arquitetura em camadas separia apresentação (UI), lógica de negócio (regras) e acesso a dados (banco). Cada camada tem responsabilidade clara.'
+      },
+      {
+        q: 'No sistema de consultas, o que faz a camada de NEGÓCIO?',
+        opts: [
+          'Mostra a interface gráfica',
+          'Verifica se o médico está disponível no horário solicitado',
+          'Salva dados crus no banco',
+          'Imprime relatórios em PDF'
+        ],
+        correct: 1,
+        explain: 'A camada de negócio contém as regras: "médico disponível?", "consulta dentro do prazo de cancelamento?". Ela orquestra a lógica entre apresentação e dados.'
+      },
+      {
+        q: 'Por que NÃO devemos escolher microsserviços só porque "parecem modernos"?',
+        opts: [
+          'Porque são sempre lentos',
+          'Porque aumentam desnecessariamente a complexidade em projetos pequenos',
+          'Porque são proibidos pela faculdade',
+          'Porque não existem mais'
+        ],
+        correct: 1,
+        explain: 'Cuidado! Microsserviços trazem complexidade de deployment, comunicação e monitoração. Em projetos pequenos, isso pode ser desnecessário. Use quando fizer sentido.'
+      },
+      {
+        q: 'A arquitetura escolhida precisa ser coerente com:',
+        opts: [
+          'A moda tecnológica do momento',
+          'O sistema descrito na introdução',
+          'O projeto do colega de turma',
+          'O framework mais famoso no GitHub'
+        ],
+        correct: 1,
+        explain: 'A escolha deve ser coerente com o sistema que você descreveu. Não basta escolher "o mais moderno" — o professor quer entender POR QUE a escolha é adequada.'
+      },
+      {
+        q: 'Em microsserviços, funcionalidades como pacientes, consultas e notificações ficam:',
+        opts: [
+          'Todas juntas em um único serviço monolítico',
+          'Separadas em serviços independentes, cada um com sua responsabilidade',
+          'Em um único banco de dados compartilhado, sem separação',
+          'Apenas no frontend, sem backend'
+        ],
+        correct: 1,
+        explain: 'Microsserviços = serviços independentes por capacidade do negócio. Pacientes, consultas e notificações podem ser serviços separados, cada um escalando por conta própria.'
+      }
+    ]
+  },
+  {
+    id: 4,
+    name: 'Diagramas',
+    icon: '📊',
+    color: '#34d399',
+    desc: 'Apresentar os diagramas obrigatórios: componentes e implantação.',
+    questions: [
+      {
+        q: 'Quantos diagramas são OBRIGATÓRIOS no desafio?',
+        opts: [
+          'Um',
+          'Dois',
+          'Três',
+          'Quatro'
+        ],
+        correct: 1,
+        explain: 'São obrigatórios DOIS diagramas: componentes (módulos e relações) e implantação (onde os componentes serão executados).'
+      },
+      {
+        q: 'Quais são os dois diagramas obrigatórios mencionados pelo professor?',
+        opts: [
+          'Componentes e Implantação',
+          'Classes e Sequência',
+          'Casos de uso e Atividades',
+          'Estado e Pacote'
+        ],
+        correct: 0,
+        explain: 'Diagrama de COMPONENTES: mostra os módulos e como se relacionam. Diagrama de IMPLANTAÇÃO: mostra onde os componentes são executados (servidores, contêineres etc.).'
+      },
+      {
+        q: 'O diagrama de classes no desafio é:',
+        opts: [
+          'Sempre obrigatório',
+          'Opcional, caso seja adequado à arquitetura e ao cenário',
+          'Proibido pelo professor',
+          'Recomendado apenas para projetos gigantes'
+        ],
+        correct: 1,
+        explain: 'O diagrama de classes é OPCIONAL — pode ser usado se fizer sentido para a arquitetura e o cenário. Componentes e implantação, esses sim, são obrigatórios.'
+      },
+      {
+        q: 'Qual ferramenta o professor cita como útil para diagramas?',
+        opts: [
+          'Microsoft Word',
+          'Draw.io / Lucidchart / PlantUML',
+          'Bloco de Notas',
+          'Microsoft Excel'
+        ],
+        correct: 1,
+        explain: 'Draw.io, Lucidchart e PlantUML são ferramentas citadas como úteis. O importante é o diagrama representar SEU projeto, não um desenho genérico da internet.'
+      },
+      {
+        q: 'Por que copiar um diagrama genérico da internet é inadequado?',
+        opts: [
+          'Porque é ilegal',
+          'Porque não tem relação com o sistema proposto por você',
+          'Porque fica visualmente feio',
+          'Porque o professor não sabe ler'
+        ],
+        correct: 1,
+        explain: 'O diagrama precisa representar o SEU projeto. Copiar um desenho genérico que não tem a ver com o sistema proposto anula o objetivo da etapa.'
+      }
+    ]
+  },
+  {
+    id: 5,
+    name: 'Entrega',
+    icon: '📦',
+    color: '#fbbf24',
+    desc: 'Usar o modelo oficial, converter em PDF, entregar até o final da semana 5.',
+    questions: [
+      {
+        q: 'Quantos pontos vale o desafio?',
+        opts: [
+          '4 pontos',
+          '5 pontos',
+          '6 pontos',
+          '10 pontos'
+        ],
+        correct: 2,
+        explain: 'O desafio avaliativo vale 6 pontos e deve ser entregue até o final da semana 5.'
+      },
+      {
+        q: 'Até quando o trabalho deve ser entregue?',
+        opts: [
+          'Final da semana 3',
+          'Final da semana 5',
+          'Final da semana 7',
+          'Final do semestre letivo'
+        ],
+        correct: 1,
+        explain: 'Prazo final: final da semana 5. Depois de finalizar o trabalho, é preciso convertê-lo para PDF e realizar a entrega.'
+      },
+      {
+        q: 'Cada um dos quatro critérios apresentados deve constituir:',
+        opts: [
+          'Um parágrafo solto no documento',
+          'Um capítulo do documento',
+          'Uma nota de rodapé',
+          'Um slide de apresentação'
+        ],
+        correct: 1,
+        explain: 'Cada um dos QUATRO critérios (Introdução, Tecnologias, Arquitetura, Diagramas) deve constituir um CAPÍTULO do documento, usando o modelo oficial.'
+      },
+      {
+        q: 'Em que formato o trabalho final deve ser entregue?',
+        opts: [
+          'Word (.docx)',
+          'PDF',
+          'HTML',
+          'PowerPoint (.pptx)'
+        ],
+        correct: 1,
+        explain: 'Depois de finalizar, converter para PDF e entregar. PDF garante que a formatação (diagramas, layout) chegue intacta ao professor.'
+      },
+      {
+        q: 'É obrigatório utilizar:',
+        opts: [
+          'Qualquer modelo que você encontrar na internet',
+          'O modelo oficial de trabalho da disciplina',
+          'Um modelo próprio, criado do zero',
+          'Nenhum modelo, pois é livre'
+        ],
+        correct: 1,
+        explain: 'Primeira exigência: usar OBRIGATORIAMENTE o modelo oficial de trabalho da disciplina. Segunda: converter em PDF e entregar até a semana 5.'
+      }
+    ]
+  }
+];
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+const state = {
+  currentStageIndex: 0,
+  currentQuestionIndex: 0,
+  stageScore: 0,           // correct in current stage
+  stageResults: [],        // per-stage {correct, total}
+  totalCorrect: 0,
+  totalAnswered: 0,
+  answeredThisQuestion: false,
+  unlockedStage: 0,        // highest unlocked stage index
+  completedStages: new Set()
+};
+
+const TOTAL_QUESTIONS = STAGES.reduce((s, st) => s + st.questions.length, 0); // 25
+
+/* ============================================================
+   DOM HELPERS
+   ============================================================ */
+const $ = (id) => document.getElementById(id);
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+function updateProgress() {
+  const pct = (state.totalAnswered / TOTAL_QUESTIONS) * 100;
+  $('progressFill').style.width = pct + '%';
+  $('progressCount').textContent = `${state.totalAnswered} / ${TOTAL_QUESTIONS} perguntas`;
+  if (state.currentStageIndex < STAGES.length) {
+    $('progressLabel').textContent = `Fase ${state.currentStageIndex + 1}: ${STAGES[state.currentStageIndex].name}`;
+  } else {
+    $('progressLabel').textContent = 'Concluído!';
+  }
+  $('hudScore').textContent = state.totalCorrect;
+  $('hudStage').textContent = `Fase ${Math.min(state.currentStageIndex + 1, STAGES.length)}`;
+}
+
+/* ============================================================
+   STAGE MAP
+   ============================================================ */
+function renderStageMap() {
+  const map = $('stageMap');
+  map.innerHTML = '';
+  STAGES.forEach((st, i) => {
+    const completed = state.completedStages.has(i);
+    const locked = i > state.unlockedStage;
+    const card = document.createElement('div');
+    card.className = 'stage-card' + (completed ? ' completed' : '') + (locked ? ' locked' : '');
+    card.style.setProperty('--stage-color', st.color);
+    card.innerHTML = `
+      <div class="stage-badge">${completed ? '✓' : (locked ? '🔒' : (i+1))}</div>
+      <div class="stage-num">FASE ${String(i+1).padStart(2,'0')}</div>
+      <div class="stage-icon">${st.icon}</div>
+      <h3>${st.name}</h3>
+      <p>${st.desc}</p>
+    `;
+    if (!locked) {
+      card.addEventListener('click', () => {
+        if (completed) {
+          // allow replay but reset its completion for replay
+          state.completedStages.delete(i);
+        }
+        startStage(i);
+      });
+    }
+    map.appendChild(card);
+  });
+}
+
+/* ============================================================
+   START / FLOW
+   ============================================================ */
+function startWelcome() {
+  $('hud').style.display = 'none';
+  $('progressWrap').style.display = 'none';
+  showScreen('welcome');
+}
+
+function startMap() {
+  $('hud').style.display = 'flex';
+  $('progressWrap').style.display = 'block';
+  renderStageMap();
+  showScreen('map');
+}
+
+function startStage(stageIndex) {
+  state.currentStageIndex = stageIndex;
+  state.currentQuestionIndex = 0;
+  state.stageScore = 0;
+  renderQuestion();
+  showScreen('quiz');
+}
+
+function renderQuestion() {
+  const stage = STAGES[state.currentStageIndex];
+  const q = stage.questions[state.currentQuestionIndex];
+  state.answeredThisQuestion = false;
+
+  $('qStageTag').innerHTML = `<span>📍</span> Fase ${stage.id} · ${stage.name}`;
+  $('qStageTag').style.color = stage.color;
+  $('qStageTag').style.borderColor = stage.color + '44';
+  $('qStageTag').style.background = stage.color + '1a';
+
+  $('qCounter').textContent = `Pergunta ${state.currentQuestionIndex + 1} de ${stage.questions.length}`;
+  $('questionText').innerHTML = `<span class="qmark">Q${state.currentQuestionIndex + 1}.</span>${q.q}`;
+
+  const ol = $('optionsList');
+  ol.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.addEventListener('click', () => answerQuestion(i));
+    ol.appendChild(btn);
+  });
+
+  $('professorBox').style.display = 'none';
+  $('btnNext').disabled = true;
+  $('btnNext').textContent = (state.currentQuestionIndex === stage.questions.length - 1)
+    ? 'Finalizar fase →' : 'Próxima →';
+
+  updateProgress();
+}
+
+function answerQuestion(selectedIdx) {
+  if (state.answeredThisQuestion) return;
+  state.answeredThisQuestion = true;
+
+  const stage = STAGES[state.currentStageIndex];
+  const q = stage.questions[state.currentQuestionIndex];
+  const isCorrect = selectedIdx === q.correct;
+  if (isCorrect) {
+    state.stageScore++;
+    state.totalCorrect++;
+  }
+  state.totalAnswered++;
+
+  // Mark options
+  const opts = document.querySelectorAll('.option');
+  opts.forEach((el, i) => {
+    el.classList.add('disabled');
+    if (i === q.correct) el.classList.add('correct');
+    else if (i === selectedIdx) el.classList.add('wrong');
+  });
+
+  // Professor feedback
+  const tag = isCorrect
+    ? '<span class="tag correct">CORRETO!</span>'
+    : '<span class="tag wrong">QUASE!</span>';
+  $('profText').innerHTML = `${tag}${q.explain}`;
+  $('professorBox').style.display = 'flex';
+  $('professorBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  $('btnNext').disabled = false;
+  updateProgress();
+}
+
+function nextQuestion() {
+  const stage = STAGES[state.currentStageIndex];
+  if (state.currentQuestionIndex < stage.questions.length - 1) {
+    state.currentQuestionIndex++;
+    renderQuestion();
+  } else {
+    // stage complete
+    state.completedStages.add(state.currentStageIndex);
+    if (state.unlockedStage < state.currentStageIndex + 1 && state.currentStageIndex + 1 < STAGES.length) {
+      state.unlockedStage = state.currentStageIndex + 1;
+    }
+    showStageComplete();
+  }
+}
+
+function showStageComplete() {
+  const stage = STAGES[state.currentStageIndex];
+  const correct = state.stageScore;
+  const total = stage.questions.length;
+  $('scCorrect').textContent = correct;
+  $('scTotal').textContent = total;
+
+  const pct = correct / total;
+  let emoji, title, msg;
+  if (pct === 1) {
+    emoji = '🏆'; title = 'Perfeito!';
+    msg = `Você dominou a fase de <b>${stage.name}</b>! ${stage.desc.toLowerCase()}`;
+  } else if (pct >= 0.6) {
+    emoji = '🎉'; title = 'Muito bom!';
+    msg = `Você está no caminho certo em <b>${stage.name}</b>. Reveja as perguntas que errou para fechar o assunto.`;
+  } else {
+    emoji = '💪'; title = 'Continue tentando!';
+    msg = `A fase de <b>${stage.name}</b> ficou difícil. Releia o texto do professor e tente novamente — você consegue!`;
+  }
+  $('scEmoji').textContent = emoji;
+  $('scTitle').textContent = title;
+  $('scMessage').innerHTML = msg;
+
+  const isLast = state.currentStageIndex === STAGES.length - 1;
+  $('scNext').textContent = isLast ? 'Ver resultado final 🏁' : 'Continuar →';
+  showScreen('stageComplete');
+}
+
+function continueAfterStage() {
+  const isLast = state.currentStageIndex === STAGES.length - 1;
+  if (isLast) {
+    showFinalResults();
+  } else {
+    startStage(state.currentStageIndex + 1);
+  }
+}
+
+/* ============================================================
+   FINAL RESULTS
+   ============================================================ */
+function showFinalResults() {
+  // Convert correct count to a score out of 6
+  const grade = ((state.totalCorrect / TOTAL_QUESTIONS) * 6).toFixed(1);
+  $('finalGrade').textContent = grade;
+
+  let verdict;
+  const ratio = state.totalCorrect / TOTAL_QUESTIONS;
+  if (ratio === 1) {
+    verdict = '🏆 Excelente! Você pensa como um(a) arquiteto(a) de software. Está mais que pronto(a) para o desafio real — aplique os conceitos no seu trabalho e tire aquele 6/6!';
+  } else if (ratio >= 0.8) {
+    verdict = '🎉 Muito bem! Você compreendeu a essência do desafio. Revise os pontos que errou e terá um trabalho excelente nas mãos.';
+  } else if (ratio >= 0.6) {
+    verdict = '💪 Bom começo! Você pegou o espírito do desafio, mas ainda há conceitos importantes para reforçar. Releia a fala do professor com atenção.';
+  } else {
+    verdict = '📚 Não desanime! O desafio pede justamente isso: entender o problema antes de codar. Releia o enunciado, refaça o jogo e fixe os conceitos das 5 fases.';
+  }
+  $('finalVerdict').textContent = verdict;
+
+  // Breakdown
+  const bd = $('breakdown');
+  bd.innerHTML = '';
+  // approximate per-stage score (we only tracked current stage, but we know completed ones produced stageScore for last; rebuild from total by replay guess is impossible, so we show aggregate)
+  STAGES.forEach((st, i) => {
+    const completed = state.completedStages.has(i);
+    const item = document.createElement('div');
+    item.className = 'bd-item';
+    item.innerHTML = `
+      <div class="bd-name">${st.icon} Fase ${st.id} — ${st.name}</div>
+      <div class="bd-val ${completed ? 'good' : 'bad'}">${completed ? '✓ Concluída' : '⏳ Pendente'}</div>
+    `;
+    bd.appendChild(item);
+  });
+
+  // aggregate accuracy
+  const accItem = document.createElement('div');
+  accItem.className = 'bd-item';
+  const acc = Math.round(ratio * 100);
+  const cls = acc >= 80 ? 'good' : (acc >= 60 ? 'mid' : 'bad');
+  accItem.innerHTML = `
+    <div class="bd-name">🎯 Precisão geral</div>
+    <div class="bd-val ${cls}">${acc}% (${state.totalCorrect}/${TOTAL_QUESTIONS})</div>
+  `;
+  bd.appendChild(accItem);
+
+  // show confetti for great results
+  if (ratio >= 0.6) launchConfetti();
+
+  showScreen('results');
+}
+
+function launchConfetti() {
+  const colors = ['#22d3ee', '#a78bfa', '#f472b6', '#34d399', '#fbbf24'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    c.style.animationDelay = Math.random() * 0.5 + 's';
+    c.style.transform = `rotate(${Math.random() * 360}deg)`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4500);
+  }
+}
+
+/* ============================================================
+   EVENT BINDINGS
+   ============================================================ */
+$('btnStart').addEventListener('click', startMap);
+$('btnBackWelcome').addEventListener('click', startWelcome);
+$('btnNext').addEventListener('click', nextQuestion);
+$('btnQuit').addEventListener('click', () => {
+  if (confirm('Sair do quiz agora? Seu progresso nesta fase será perdido.')) {
+    startMap();
+  }
+});
+$('scMap').addEventListener('click', startMap);
+$('scNext').addEventListener('click', continueAfterStage);
+$('btnRestart').addEventListener('click', () => {
+  // reset
+  state.currentStageIndex = 0;
+  state.currentQuestionIndex = 0;
+  state.stageScore = 0;
+  state.totalCorrect = 0;
+  state.totalAnswered = 0;
+  state.unlockedStage = 0;
+  state.completedStages = new Set();
+  startMap();
+});
+$('btnReview').addEventListener('click', () => {
+  const box = $('reviewBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+});
+
+// keyboard: 1-4 to pick option, Enter for next
+document.addEventListener('keydown', (e) => {
+  if (!$('screen-quiz').classList.contains('active')) return;
+  if (state.answeredThisQuestion) {
+    if (e.key === 'Enter' && !$('btnNext').disabled) nextQuestion();
+    return;
+  }
+  const idx = { '1': 0, '2': 1, '3': 2, '4': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 }[e.key.toLowerCase()];
+  if (idx !== undefined) {
+    const opts = document.querySelectorAll('.option');
+    if (opts[idx]) opts[idx].click();
+  }
+});
+
+</script>
+</body>
+</html>
