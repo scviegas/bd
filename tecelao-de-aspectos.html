@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TECELÃO DE ASPECTOS — A Saga da POA</title>
+<style>
+:root{
+  --bg:#060913; --bg2:#0b1120; --card:rgba(15,23,42,.78); --card2:rgba(30,41,59,.6);
+  --line:rgba(148,163,184,.22); --txt:#e6edf7; --mut:#9aa7bd;
+  --cyan:#22d3ee; --purple:#a78bfa; --pink:#f472b6; --amber:#fbbf24;
+  --green:#34d399; --red:#fb7185; --blue:#60a5fa;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh; background:
+    radial-gradient(1200px 700px at 15% -10%, rgba(96,60,180,.28), transparent 60%),
+    radial-gradient(1000px 600px at 110% 20%, rgba(14,116,144,.22), transparent 55%),
+    radial-gradient(900px 800px at 50% 120%, rgba(190,24,93,.16), transparent 60%),
+    var(--bg);
+  color:var(--txt);
+  font-family:'Segoe UI', system-ui, -apple-system, Roboto, Ubuntu, sans-serif;
+  overflow-x:hidden;
+}
+#rain{position:fixed; inset:0; z-index:0; opacity:.34; pointer-events:none}
+#app{position:relative; z-index:1; max-width:1020px; margin:0 auto; padding:22px 16px 60px}
+.screen{display:none}
+.screen.active{display:block; animation:fadein .45s ease}
+@keyframes fadein{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none}}
+
+/* ---------- botões ---------- */
+.btn{
+  display:inline-flex; align-items:center; gap:9px; cursor:pointer;
+  font:inherit; font-weight:700; letter-spacing:.02em;
+  color:var(--txt); background:var(--card2);
+  border:1px solid var(--line); border-radius:14px;
+  padding:13px 22px; font-size:1rem;
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:hover{transform:translateY(-2px); border-color:rgba(167,139,250,.6); box-shadow:0 10px 30px -12px rgba(167,139,250,.45)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.primary{
+  background:linear-gradient(135deg, rgba(34,211,238,.18), rgba(167,139,250,.22));
+  border-color:rgba(34,211,238,.55);
+  box-shadow:0 0 0 1px rgba(34,211,238,.15), 0 14px 40px -14px rgba(34,211,238,.5);
+}
+.btn.primary:hover{border-color:var(--cyan); box-shadow:0 0 24px rgba(34,211,238,.35)}
+.btn.danger{border-color:rgba(251,113,133,.5)}
+.btn.small{padding:9px 15px; font-size:.9rem; border-radius:11px}
+.btn:disabled{opacity:.45; cursor:not-allowed; transform:none}
+
+/* ---------- intro ---------- */
+.intro-card{
+  text-align:center; padding:46px 26px 34px; border-radius:26px;
+  background:linear-gradient(180deg, rgba(15,23,42,.86), rgba(15,23,42,.55));
+  border:1px solid var(--line);
+  box-shadow:0 40px 120px -40px rgba(34,211,238,.35), inset 0 1px 0 rgba(255,255,255,.05);
+  position:relative; overflow:hidden;
+}
+.intro-card::before{
+  content:""; position:absolute; inset:-60%; background:conic-gradient(from 0deg, transparent 0 70%, rgba(167,139,250,.14) 85%, transparent 100%);
+  animation:spin 9s linear infinite; pointer-events:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.kicker{
+  display:inline-block; font-size:.72rem; font-weight:800; letter-spacing:.22em;
+  color:var(--cyan); border:1px solid rgba(34,211,238,.4); border-radius:999px;
+  padding:7px 16px; margin-bottom:18px; background:rgba(34,211,238,.08);
+}
+.title{
+  font-size:clamp(2.1rem, 6.5vw, 3.7rem); font-weight:900; letter-spacing:.05em; line-height:1.05;
+  background:linear-gradient(92deg, var(--cyan) 5%, var(--purple) 45%, var(--pink) 90%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 0 26px rgba(167,139,250,.4));
+  animation:glowpulse 3.2s ease-in-out infinite;
+}
+@keyframes glowpulse{0%,100%{filter:drop-shadow(0 0 18px rgba(167,139,250,.35))} 50%{filter:drop-shadow(0 0 40px rgba(34,211,238,.5))}}
+.subtitle{color:var(--mut); margin-top:10px; font-size:1.05rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600}
+.story{
+  max-width:640px; margin:26px auto 8px; min-height:150px;
+  background:rgba(2,6,23,.55); border:1px solid var(--line); border-radius:16px;
+  padding:20px 22px; text-align:left; font-size:.98rem; line-height:1.75; color:#cbd5e1;
+  white-space:pre-wrap;
+}
+.story .hl-c{color:var(--cyan); font-weight:700}
+.story .hl-p{color:var(--purple); font-weight:700}
+.story .hl-a{color:var(--amber); font-weight:700}
+.intro-actions{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:22px}
+.credits{margin-top:26px; font-size:.74rem; color:#64748b; line-height:1.7}
+
+/* ---------- mapa ---------- */
+.topbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:18px}
+.topbar h2{font-size:1.5rem; letter-spacing:.04em}
+.topbar h2 .thin{color:var(--mut); font-weight:400; font-size:.9rem}
+.map-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-top:14px}
+.node{
+  position:relative; cursor:pointer; text-align:center; padding:22px 12px 16px;
+  border-radius:20px; border:1px solid var(--line); background:var(--card);
+  transition:transform .18s ease, box-shadow .18s, border-color .18s;
+}
+.node:hover{transform:translateY(-5px); box-shadow:0 18px 50px -18px rgba(34,211,238,.45); border-color:rgba(34,211,238,.5)}
+.node .n-icon{font-size:2rem; filter:drop-shadow(0 0 12px rgba(34,211,238,.45))}
+.node .n-name{font-weight:800; margin-top:10px; font-size:.95rem; letter-spacing:.02em}
+.node .n-desc{font-size:.76rem; color:var(--mut); margin-top:6px; line-height:1.5; min-height:44px}
+.node .n-stars{margin-top:10px; font-size:.95rem; letter-spacing:.15em; color:var(--amber)}
+.node.locked{opacity:.42; filter:grayscale(.7); cursor:not-allowed}
+.node.locked:hover{transform:none; box-shadow:none}
+.node.locked::after{content:"🔒"; position:absolute; top:10px; right:12px; font-size:1.1rem}
+.node.boss{border-color:rgba(244,114,182,.45); background:linear-gradient(180deg, rgba(80,20,60,.5), rgba(15,23,42,.8))}
+.node.boss .n-icon{filter:drop-shadow(0 0 14px rgba(244,114,182,.6))}
+.map-foot{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:26px}
+.bestline{text-align:center; color:var(--mut); font-size:.85rem; margin-top:14px}
+.hintline{text-align:center; color:#7dd3fc; font-size:.85rem; margin-top:8px}
+
+/* ---------- HUD ---------- */
+.hud{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px}
+.chip{
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--card); border:1px solid var(--line); border-radius:999px;
+  padding:8px 15px; font-size:.88rem; font-weight:700;
+}
+.chip .lab{color:var(--mut); font-weight:500; font-size:.75rem; text-transform:uppercase; letter-spacing:.08em}
+.chip.phase{border-color:rgba(34,211,238,.4); color:#a5f3fc}
+.chip.score{border-color:rgba(251,191,36,.4); color:#fde68a}
+.chip.combo{border-color:rgba(244,114,182,.45); color:#fbcfe8}
+#hud-lives{letter-spacing:.1em; font-size:1rem}
+.timerwrap{height:12px; border-radius:999px; background:rgba(2,6,23,.7); border:1px solid var(--line); overflow:hidden; margin-bottom:18px}
+#timerbar{height:100%; width:100%; border-radius:999px; background:linear-gradient(90deg, var(--green), var(--cyan)); transition:width .1s linear}
+#timerbar.warn{background:linear-gradient(90deg, var(--amber), #f59e0b)}
+#timerbar.danger{background:linear-gradient(90deg, var(--red), #ef4444); animation:barpulse .5s infinite alternate}
+@keyframes barpulse{from{opacity:.75} to{opacity:1}}
+
+/* ---------- estágio do jogo ---------- */
+.stage-card{
+  border-radius:22px; border:1px solid var(--line); background:var(--card);
+  padding:24px; box-shadow:0 30px 90px -40px rgba(0,0,0,.9);
+  animation:fadein .35s ease;
+}
+.stage-narr{color:#a5f3fc; font-size:.92rem; margin-bottom:16px; line-height:1.6}
+.stage-narr .tag{display:inline-block; font-size:.7rem; font-weight:800; letter-spacing:.14em; color:var(--purple); border:1px solid rgba(167,139,250,.4); padding:4px 10px; border-radius:999px; margin-right:8px; background:rgba(167,139,250,.08); text-transform:uppercase}
+.q-title{font-size:1.12rem; font-weight:800; line-height:1.55; margin-bottom:16px}
+.q-title code, .narr-code{font-family:ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace}
+code.inline{
+  font-family:ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  background:rgba(34,211,238,.1); border:1px solid rgba(34,211,238,.25); color:#a5f3fc;
+  border-radius:7px; padding:1px 7px; font-size:.9em;
+}
+
+/* caça ao espalhamento */
+.codecard{
+  background:#04070f; border:1px solid rgba(148,163,184,.25); border-radius:14px;
+  font-family:ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  font-size:.85rem; line-height:1.6; overflow-x:auto; padding:8px 0;
+  box-shadow:inset 0 0 40px rgba(34,211,238,.05);
+}
+.cline{display:flex; gap:12px; padding:3px 14px; white-space:pre; align-items:center; border-left:3px solid transparent}
+.cline .ln{color:#475569; user-select:none; min-width:26px; text-align:right}
+.cline.plain{color:#64748b}
+.cline.click{cursor:pointer; color:#cbd5e1; transition:background .12s, border-color .12s}
+.cline.click:hover{background:rgba(34,211,238,.07); border-left-color:rgba(34,211,238,.55)}
+.cline.found{background:rgba(251,191,36,.13); border-left-color:var(--amber); color:#fde68a; font-weight:700}
+.cline.found::after{content:"  ← logging detectado!"; color:var(--amber); font-size:.72rem; font-weight:800; font-family:'Segoe UI', sans-serif}
+.cline.missed{background:rgba(251,113,133,.14); border-left-color:var(--red); color:#fecdd3}
+.cline.missed::after{content:"  ← estava aqui!"; color:var(--red); font-size:.72rem; font-weight:800; font-family:'Segoe UI', sans-serif}
+.cline.oops{animation:oopsflash .5s ease}
+@keyframes oopsflash{0%,100%{background:transparent} 40%{background:rgba(251,113,133,.3)}}
+.huntmeta{display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:.82rem; color:var(--mut); flex-wrap:wrap; gap:8px}
+.huntmeta b{color:var(--amber)}
+
+/* quiz */
+.options{display:grid; gap:10px; margin-top:6px}
+.opt{
+  display:flex; gap:12px; align-items:flex-start; text-align:left; width:100%;
+  font:inherit; font-size:.94rem; line-height:1.5; color:var(--txt);
+  background:rgba(30,41,59,.55); border:1px solid var(--line); border-radius:14px;
+  padding:13px 16px; cursor:pointer; transition:transform .14s, border-color .14s, background .14s;
+}
+.opt:hover{transform:translateX(4px); border-color:rgba(34,211,238,.55); background:rgba(34,211,238,.07)}
+.opt .letter{
+  flex:0 0 30px; height:30px; border-radius:9px; display:grid; place-items:center;
+  font-weight:900; font-size:.85rem; color:#0f172a; background:linear-gradient(135deg, var(--cyan), var(--purple));
+}
+.opt .ocode{
+  font-family:ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  background:rgba(2,6,23,.6); border-radius:8px; padding:2px 8px; color:#e0f2fe; display:inline-block;
+}
+.opt.correct{border-color:var(--green); background:rgba(52,211,153,.13); animation:pop .35s ease}
+.opt.wrongpick{border-color:var(--red); background:rgba(251,113,133,.12); animation:shake .4s ease}
+.opt:disabled{cursor:default}
+.opt:disabled:hover{transform:none}
+.opt.dim{opacity:.5}
+@keyframes pop{0%{transform:scale(1)} 40%{transform:scale(1.025)} 100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 50%{transform:translateX(6px)} 75%{transform:translateX(-4px)}}
+.kbd-hint{color:#64748b; font-size:.75rem; margin-top:10px}
+
+/* feedback */
+.feedback{
+  margin-top:18px; border-radius:16px; padding:18px; border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(30,41,59,.7), rgba(15,23,42,.7));
+  animation:slideup .3s ease;
+}
+@keyframes slideup{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
+.feedback.hidden{display:none}
+.fb-head{display:flex; align-items:center; gap:10px; font-weight:900; font-size:1.05rem; margin-bottom:8px}
+.fb-head.ok{color:var(--green)} .fb-head.bad{color:var(--red)}
+.fb-body{font-size:.92rem; line-height:1.7; color:#cbd5e1}
+.fb-body .src{display:inline-block; margin-top:10px; font-size:.72rem; color:#7dd3fc; border:1px dashed rgba(125,211,252,.4); padding:3px 10px; border-radius:999px}
+.fb-actions{margin-top:14px}
+
+/* boss */
+.boss-wrap{display:grid; grid-template-columns:150px 1fr; gap:18px; align-items:center; margin-bottom:16px}
+.boss-face{position:relative; display:grid; place-items:center}
+.boss-svg{width:130px; filter:drop-shadow(0 0 22px rgba(244,114,182,.45)); animation:bossfloat 3s ease-in-out infinite}
+@keyframes bossfloat{0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)}}
+.boss-face.hit .boss-svg{animation:hitshake .55s ease; filter:drop-shadow(0 0 30px rgba(251,113,133,.85)) saturate(2)}
+@keyframes hitshake{0%,100%{transform:translate(0)} 20%{transform:translate(-9px,3px) rotate(-3deg)} 45%{transform:translate(8px,-3px) rotate(3deg)} 70%{transform:translate(-5px,2px) rotate(-2deg)}}
+.boss-name{font-weight:900; font-size:1.1rem; color:#fbcfe8; letter-spacing:.04em}
+.boss-sub{font-size:.78rem; color:var(--mut); margin-top:2px}
+.boss-hp{display:flex; gap:4px; margin-top:10px}
+.boss-hp .seg{height:13px; flex:1; border-radius:4px; background:linear-gradient(180deg, var(--pink), #be185d); box-shadow:0 0 8px rgba(244,114,182,.5); transition:opacity .3s, transform .3s}
+.boss-hp .seg.off{opacity:.14; transform:scaleY(.55); box-shadow:none}
+.boss-speech{
+  margin:4px 0 16px; padding:12px 16px; border-radius:14px; font-size:.9rem; line-height:1.6;
+  background:rgba(80,20,60,.35); border:1px solid rgba(244,114,182,.4); color:#fbcfe8;
+  animation:slideup .35s ease;
+}
+.boss-speech b{color:#fda4af}
+
+/* ---------- resumo de fase ---------- */
+.summary{text-align:center; padding:30px 20px}
+.summary h3{font-size:1.5rem; letter-spacing:.03em; margin-bottom:6px}
+.sum-stars{font-size:2.3rem; letter-spacing:.2em; margin:14px 0; color:var(--amber)}
+.sum-stars .s{display:inline-block; animation:starIn .5s ease backwards}
+.sum-stars .s:nth-child(2){animation-delay:.18s}
+.sum-stars .s:nth-child(3){animation-delay:.36s}
+@keyframes starIn{from{opacity:0; transform:scale(0) rotate(-40deg)} to{opacity:1; transform:none}}
+.sum-stats{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:16px 0 22px}
+.sum-stats .ss{background:rgba(2,6,23,.55); border:1px solid var(--line); border-radius:12px; padding:10px 16px; font-size:.85rem}
+.sum-stats .ss b{display:block; font-size:1.25rem; color:var(--cyan); margin-top:3px}
+
+/* ---------- fim de jogo ---------- */
+.end-card{text-align:center; padding:36px 24px}
+.medal{font-size:4rem; filter:drop-shadow(0 0 30px rgba(251,191,36,.55)); animation:starIn .7s ease}
+.rank{font-size:clamp(1.7rem, 5vw, 2.5rem); font-weight:900; margin-top:10px;
+  background:linear-gradient(92deg, var(--amber), var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.end-msg{color:#cbd5e1; max-width:620px; margin:14px auto 0; line-height:1.75; font-size:.95rem}
+.timeline{max-width:640px; margin:26px auto; text-align:left; border-left:2px solid rgba(167,139,250,.4); padding-left:18px}
+.timeline .tl{position:relative; padding:7px 0; font-size:.9rem; color:#cbd5e1; line-height:1.6}
+.timeline .tl::before{content:""; position:absolute; left:-24px; top:14px; width:9px; height:9px; border-radius:50%; background:var(--purple); box-shadow:0 0 10px var(--purple)}
+.timeline .tl b{color:var(--amber)}
+.refs{max-width:640px; margin:0 auto 8px; text-align:left; font-size:.74rem; color:#64748b; line-height:1.7; border-top:1px solid var(--line); padding-top:16px}
+
+/* ---------- game over ---------- */
+.over-card{text-align:center; padding:40px 24px}
+.over-card .big{font-size:3.6rem; animation:shake .6s ease}
+
+/* ---------- modal ---------- */
+.modal{position:fixed; inset:0; z-index:50; display:grid; place-items:center; background:rgba(2,6,23,.75); backdrop-filter:blur(6px); animation:fadein .25s ease}
+.modal.hidden{display:none}
+.modal-card{
+  max-width:680px; width:calc(100% - 32px); max-height:82vh; overflow-y:auto;
+  background:#0d1526; border:1px solid rgba(167,139,250,.4); border-radius:22px; padding:26px;
+  box-shadow:0 40px 120px -30px rgba(167,139,250,.5);
+}
+.modal-card h3{margin-bottom:14px; letter-spacing:.03em}
+.gl{margin-bottom:14px; padding-bottom:14px; border-bottom:1px dashed rgba(148,163,184,.2)}
+.gl dt{font-weight:800; color:#a5f3fc; font-size:.92rem}
+.gl dt .en{color:var(--mut); font-weight:500; font-size:.78rem}
+.gl dd{font-size:.85rem; color:#cbd5e1; line-height:1.7; margin-top:5px}
+.gl dd code{font-family:ui-monospace, Consolas, monospace; background:rgba(34,211,238,.1); border-radius:6px; padding:1px 6px; color:#a5f3fc; font-size:.92em}
+.modal-close{margin-top:16px; text-align:center}
+
+/* ---------- efeitos ---------- */
+#fx-layer{position:fixed; inset:0; z-index:60; pointer-events:none}
+.particle{position:fixed; font-size:1.1rem; will-change:transform, opacity; animation:fly .8s ease-out forwards}
+@keyframes fly{
+  0%{transform:translate(0,0) scale(.7) rotate(0); opacity:1}
+  100%{transform:translate(var(--dx), var(--dy)) scale(1.25) rotate(var(--rot)); opacity:0}
+}
+.floatscore{
+  position:fixed; font-weight:900; font-size:1.05rem; color:var(--amber); z-index:61;
+  text-shadow:0 0 12px rgba(251,191,36,.7); animation:floatup 1s ease-out forwards; pointer-events:none;
+}
+.floatscore.neg{color:var(--red); text-shadow:0 0 12px rgba(251,113,133,.7)}
+@keyframes floatup{0%{transform:translateY(0); opacity:1} 100%{transform:translateY(-46px); opacity:0}}
+#damage-flash{position:fixed; inset:0; z-index:55; pointer-events:none; opacity:0;
+  background:radial-gradient(circle at 50% 50%, transparent 40%, rgba(220,38,38,.5));}
+#damage-flash.on{animation:dmg .5s ease}
+@keyframes dmg{0%{opacity:0} 30%{opacity:1} 100%{opacity:0}}
+#app.shakeit{animation:appshake .45s ease}
+@keyframes appshake{0%,100%{transform:translate(0)} 25%{transform:translate(-8px,2px)} 50%{transform:translate(7px,-2px)} 75%{transform:translate(-4px,1px)}}
+
+@media (max-width:760px){
+  .map-grid{grid-template-columns:repeat(2, 1fr)}
+  .boss-wrap{grid-template-columns:1fr; text-align:center}
+  .boss-face{margin:0 auto}
+  .boss-hp{max-width:280px; margin-left:auto; margin-right:auto}
+  .stage-card{padding:16px}
+  .codecard{font-size:.72rem}
+}
+@media (max-width:430px){
+  .map-grid{grid-template-columns:1fr}
+  .chip{padding:7px 11px; font-size:.8rem}
+}
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<div id="damage-flash"></div>
+
+<div id="app">
+
+  <!-- ================= INTRO ================= -->
+  <section id="screen-intro" class="screen active">
+    <div class="intro-card">
+      <span class="kicker">MÓDULO 05 · ARQUITETURAS ORIENTADAS A ASPECTOS</span>
+      <h1 class="title">TECELÃO DE ASPECTOS</h1>
+      <p class="subtitle">A Saga da Programação Orientada a Aspectos</p>
+      <div class="story" id="story-text"></div>
+      <div class="intro-actions">
+        <button class="btn primary" id="btn-start">⚔️ Iniciar a Jornada</button>
+        <button class="btn ghost" id="btn-glossary-intro">📖 Códice de Conceitos</button>
+        <button class="btn small" id="btn-skip-story">Pular história ⏭</button>
+      </div>
+      <div class="credits">
+        Jogo educativo construído sobre o conteúdo do <b>Módulo 05 — Arquiteturas Orientadas a Aspectos</b><br>
+        Prof. Kleinner Silva Farias de Oliveira · PPGCA · Universidade do Vale do Rio dos Sinos (Unisinos)<br>
+        Referências: Kiczales97 (ECOOP) · Dijkstra74 · Soares10 · Laddad09 · Garcia14 · AspectJ Programming Guide
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAPA ================= -->
+  <section id="screen-map" class="screen">
+    <div class="topbar">
+      <h2>🧭 Trilha do Tecelão <span class="thin">· domine as artes da POA</span></h2>
+      <div class="hud" style="margin:0">
+        <span class="chip score"><span class="lab">Pontos</span><span id="map-score">0</span></span>
+        <span class="chip"><span id="hud-lives-map">❤️❤️❤️</span></span>
+        <button class="btn small" id="btn-glossary-map">📖 Códice</button>
+        <button class="btn small" id="btn-mute-map">🔊 Som</button>
+      </div>
+    </div>
+    <div class="map-grid" id="map-nodes"></div>
+    <p class="hintline">Complete as fases para desbloquear a batalha final contra o Monólito Spaghetti.</p>
+    <p class="bestline" id="best-line"></p>
+    <div class="map-foot">
+      <button class="btn danger small" id="btn-reset">🔄 Reiniciar jornada</button>
+    </div>
+  </section>
+
+  <!-- ================= JOGO ================= -->
+  <section id="screen-game" class="screen">
+    <div class="hud">
+      <span class="chip phase" id="hud-phase">Fase</span>
+      <span class="chip"><span class="lab">Vidas</span><span id="hud-lives">❤️❤️❤️</span></span>
+      <span class="chip score"><span class="lab">Pontos</span><span id="hud-score">0</span></span>
+      <span class="chip combo" id="hud-combo-chip" style="display:none"><span class="lab">Combo</span><span id="hud-combo">🔥 x2</span></span>
+      <button class="btn small" id="btn-mute-game" style="margin-left:auto">🔊</button>
+    </div>
+    <div class="timerwrap"><div id="timerbar"></div></div>
+    <div id="game-stage"></div>
+    <div id="feedback" class="feedback hidden">
+      <div class="fb-head" id="fb-head"></div>
+      <div class="fb-body" id="fb-body"></div>
+      <div class="fb-actions"><button class="btn primary" id="btn-continue">Continuar ⏎</button></div>
+    </div>
+  </section>
+
+  <!-- ================= GAME OVER ================= -->
+  <section id="screen-gameover" class="screen">
+    <div class="stage-card over-card">
+      <div class="big">🕸️💔</div>
+      <h2 style="margin-top:14px">Você foi enredado pelo Espalhamento!</h2>
+      <p class="end-msg" id="over-msg">
+        O Monólito venceu esta rodada... mas todo grande Tecelão cai antes de dominar a trama.
+        Kiczales também precisou de tempo para forjar o AspectJ. Respire fundo e volte mais forte!
+      </p>
+      <div class="sum-stats" id="over-stats"></div>
+      <div class="intro-actions">
+        <button class="btn primary" id="btn-retry-phase">🔁 Repetir esta fase</button>
+        <button class="btn" id="btn-back-map">🧭 Voltar ao mapa</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FINAL ================= -->
+  <section id="screen-end" class="screen">
+    <div class="stage-card end-card">
+      <div class="medal" id="end-medal">🏆</div>
+      <div class="rank" id="end-rank">Grão-Mestre dos Aspectos</div>
+      <p class="end-msg" id="end-msg"></p>
+      <div class="sum-stats" id="end-stats"></div>
+      <div class="timeline">
+        <div class="tl"><b>1974</b> — Edsger Dijkstra propõe o conceito de <b>interesse</b> (concern): modularizar é separar interesses. [Dijkstra74]</div>
+        <div class="tl"><b>1997</b> — Na conferência ECOOP, <b>Gregor Kiczales</b> e equipe publicam a <b>Programação Orientada a Aspectos</b> e nascem os aspectos. [Kiczales97]</div>
+        <div class="tl"><b>2002+</b> — O <b>AspectJ</b> amadurece como a linguagem POA mais popular, integrada ao Java e ao Eclipse. [AspectJ14]</div>
+        <div class="tl"><b>Hoje</b> — Você: um Tecelão que sabe separar interesses transversais e manter o código coeso, flexível e evoluível. A trama agora é sua!</div>
+      </div>
+      <p class="end-msg" style="font-size:.85rem">
+        “Um sistema é visto como a composição de múltiplos interesses transversais e não transversais —
+        e cabe a você decidir como modularizá-los.”<br>
+        <span style="color:#7dd3fc; font-size:.78rem">— síntese do Módulo 05, com base em [Soares10] e [Kiczales97]</span>
+      </p>
+      <div class="refs">
+        Referências do material-base: [Kiczales97] Kiczales, G. et al. Aspect-Oriented Programming, ECOOP, 1997. ·
+        [Dijkstra74] Dijkstra, E. On the Role of Scientific Thought, 1974. ·
+        [Soares10] Soares, S. Programação Orientada a Aspectos com AspectJ (Minicurso), CBSoft, 2010. ·
+        [Laddad09] Laddad, R. AspectJ in Action, 2ª ed., Manning, 2009. ·
+        [Garcia14] Garcia, A. Desenvolvimento de Software Orientado a Aspectos, PUC-Rio, 2014. ·
+        [AspectJ14] AspectJ Programming Guide, eclipse.org/aspectj. ·
+        [Martin02] Martin, R. C. Agile Software Development, 2002.
+      </div>
+      <div class="intro-actions" style="margin-top:24px">
+        <button class="btn primary" id="btn-play-again">⚔️ Jogar novamente</button>
+        <button class="btn" id="btn-glossary-end">📖 Revisar o Códice</button>
+      </div>
+      <p class="credits" style="margin-top:22px">
+        Conteúdo baseado no Módulo 05 — Arquiteturas Orientadas a Aspectos<br>
+        Prof. Kleinner Silva Farias de Oliveira · PPGCA · Unisinos · https://kleinnerfarias.github.io
+      </p>
+    </div>
+  </section>
+</div>
+
+<!-- ================= MODAL: CÓDICE ================= -->
+<div id="modal-glossary" class="modal hidden">
+  <div class="modal-card">
+    <h3>📖 Códice de Conceitos da POA</h3>
+    <dl>
+      <div class="gl"><dt>Interesse (concern)</dt>
+      <dd>“Requisitos de um ou mais stakeholders que devem ser atendidos para satisfazer o objetivo geral do sistema.” Conceito proposto por Dijkstra (1974). Pode ser <b>funcional</b> (creditar, debitar, transferir) ou <b>não funcional</b> (logging, segurança, transações, desempenho, concorrência, persistência).</dd></div>
+      <div class="gl"><dt>Interesse transversal <span class="en">(crosscutting concern)</span></dt>
+      <dd>Interesse que atravessa vários módulos do sistema — ex.: o logging aparece em <b>todas</b> as classes. É a limitação central da POO: ela não sabe modularizar esses interesses. Por isso nasceu a POA.</dd></div>
+      <div class="gl"><dt>Espalhamento <span class="en">(spread/scattering)</span></dt>
+      <dd>A implementação de um interesse se <b>espalha por várias classes</b>: um interesse é implementado por vários módulos.</dd></div>
+      <div class="gl"><dt>Entrelaçamento <span class="en">(tangling)</span></dt>
+      <dd>Dentro de um mesmo módulo, códigos de vários interesses ficam <b>misturados</b>: um módulo implementa vários interesses (negócio + logging + segurança).</dd></div>
+      <div class="gl"><dt>Ponto de junção <span class="en">(join point)</span></dt>
+      <dd>Pontos de interesse na <b>execução</b> de um programa: chamadas de métodos, execução de métodos, acesso a atributos (leitura/escrita), chamada de construtor, execução de manipulador de exceção.</dd></div>
+      <div class="gl"><dt>Pointcut (ponto de corte)</dt>
+      <dd><b>Conjunto de pontos de junção</b>. Ex.: <code>pointcut logCredito(): call (* Conta*.creditar(double));</code> — captura chamadas a <code>creditar</code> com parâmetro <code>double</code>, qualquer retorno, em classes cujo nome começa com <code>Conta</code>. Componível com <code>||</code>, <code>&amp;&amp;</code> e <code>!</code>. Designadores: <code>call</code>, <code>execution</code>, <code>set</code>, <code>get</code>, <code>handler</code>, <code>this</code>, <code>target</code>, <code>cflow</code>, <code>within</code>.</dd></div>
+      <div class="gl"><dt>Advice (adendo)</dt>
+      <dd>O <b>código executado</b> quando um pointcut captura um ponto de junção: <code>before()</code> (antes), <code>after()</code> (depois, inclusive depois de lançar exceção), <code>around()</code> (no lugar do ponto capturado).</dd></div>
+      <div class="gl"><dt>Aspecto</dt>
+      <dd>Nova <b>unidade de modularização</b> que agrupa pointcuts e advices para implementar um interesse transversal: <code>public aspect LogContas { pointcut ... after(): ... }</code></dd></div>
+      <div class="gl"><dt>Inter-type declaration</dt>
+      <dd>O aspecto declara <b>novos membros</b> (atributos, métodos, construtores) nas classes ou altera a hierarquia: <code>private boolean Server.disabled = false;</code> · <code>declare parents: Conta implements Serializable;</code></dd></div>
+      <div class="gl"><dt>Weaver (ajc)</dt>
+      <dd>O <b>tecelão</b>: no processo de compilação, entrelaça as classes OO (interesses não transversais) e os aspectos (interesses transversais), gerando <code>.class</code> compatível com qualquer JVM.</dd></div>
+      <div class="gl"><dt>Quantificação e obliviousness</dt>
+      <dd><b>Quantificação</b>: o aspecto declara seu efeito sobre o programa inteiro de uma só vez (um pointcut alcança todas as <code>Conta*</code>). <b>Obliviousness</b>: o código de negócio “não sabe” que será afetado pelos aspectos.</dd></div>
+      <div class="gl"><dt>Momento da POA (hype cycle)</dt>
+      <dd>1997 — surgimento (ECOOP) · 2004 — pico de visibilidade · 2010 — declínio · 2017 — platô da produtividade.</dd></div>
+      <div class="gl" style="border:none"><dt>Princípios violados sem POA <span class="en">[Martin02]</span></dt>
+      <dd><b>SRP</b> (Single Responsibility): a classe passa a ter responsabilidades de negócio E transversais. <b>Open-Closed</b>: se o código do interesse transversal muda, é preciso alterar todas as classes que o usam.</dd></div>
+    </dl>
+    <div class="modal-close"><button class="btn" id="btn-close-glossary">Fechar ✖</button></div>
+  </div>
+</div>
+
+<div id="fx-layer"></div>
+<script>
+/* ============================================================
+   TECELÃO DE ASPECTOS — A Saga da POA
+   Jogo educativo baseado no Módulo 05 — Arquiteturas Orientadas
+   a Aspectos (Prof. Kleinner Farias · PPGCA · Unisinos).
+   Referências do conteúdo: Kiczales97, Dijkstra74, Soares10,
+   Laddad09, Garcia14, AspectJ Programming Guide, Martin02.
+   ============================================================ */
+
+"use strict";
+
+/* ------------------------- DADOS ------------------------- */
+
+const HUNT_R1 = [
+  { t:`public class Conta {`, plain:true },
+  { t:`  private String numero;`, plain:true },
+  { t:`  private double saldo;`, plain:true },
+  { t:`  ...`, plain:true },
+  { t:`  public void debitar(double valor) {`, click:true },
+  { t:`    if (this.getSaldo() >= valor){`, click:true },
+  { t:`      this.setSaldo(this.getSaldo() - valor);`, click:true },
+  { t:`      System.out.println("ocorreu um debito!");`, tangle:true },
+  { t:`    }`, plain:true },
+  { t:`  }`, plain:true },
+  { t:`  ...`, plain:true },
+  { t:`}`, plain:true }
+];
+
+const HUNT_R2 = [
+  { t:`public class Conta {`, plain:true },
+  { t:`  private String numero;`, plain:true },
+  { t:`  private double saldo;`, plain:true },
+  { t:`  ...`, plain:true },
+  { t:`  public void creditar(double valor) {`, click:true },
+  { t:`    this.setSaldo(this.getSaldo() + valor);`, click:true },
+  { t:`    System.out.println("ocorreu um credito!");`, tangle:true },
+  { t:`  }`, plain:true },
+  { t:`  public void debitar(double valor) {`, click:true },
+  { t:`    if (this.getSaldo() >= valor){`, click:true },
+  { t:`      this.setSaldo(this.getSaldo() - valor);`, click:true },
+  { t:`      System.out.println("ocorreu um debito!");`, tangle:true },
+  { t:`    }`, plain:true },
+  { t:`  }`, plain:true },
+  { t:`}`, plain:true }
+];
+
+const HUNT_R3 = [
+  { t:`public class Conta {`, plain:true },
+  { t:`  public void setNumero(String numero) {`, click:true },
+  { t:`    System.out.println("Vai mudar o num.");`, tangle:true },
+  { t:`    this.numero = numero;`, click:true },
+  { t:`  }`, plain:true },
+  { t:`  public void creditar(double valor) {`, click:true },
+  { t:`    System.out.println("Vai mudar o saldo");`, tangle:true },
+  { t:`    this.saldo = this.saldo + valor;`, click:true },
+  { t:`  }`, plain:true },
+  { t:`  public void debitar(double valor) {`, click:true },
+  { t:`    System.out.println("Vai mudar o saldo");`, tangle:true },
+  { t:`    this.saldo = this.saldo - valor;`, click:true },
+  { t:`  }`, plain:true },
+  { t:`}`, plain:true }
+];
+
+const HUNT_R4 = [
+  { t:`public class Conta {`, plain:true },
+  { t:`  public void atualizar(Reclamacao r) throws ExcecaoTransacao {`, click:true },
+  { t:`    System.out.println("logging...");`, tangle:true },
+  { t:`}`, plain:true },
+  { t:`public class ContaPoupanca extends Conta {`, plain:true },
+  { t:`  public void render() { saldo = saldo * 1.005; }`, click:true },
+  { t:`  System.out.println("logging...");`, tangle:true },
+  { t:`}`, plain:true },
+  { t:`public class ContaCorrente extends Conta {`, plain:true },
+  { t:`  private IFacade facade;`, plain:true },
+  { t:`  System.out.println("logging...");`, tangle:true },
+  { t:`}`, plain:true },
+  { t:`public class Investimento {`, plain:true },
+  { t:`  public String getNome() { return nome; }`, click:true },
+  { t:`  System.out.println("logging...");`, tangle:true },
+  { t:`}`, plain:true }
+];
+
+const PHASES = [
+  {
+    id:"hunt", name:"Caça ao Espalhamento", icon:"🔍",
+    desc:"Encontre o logging entrelaçado ao código de negócio.",
+    intro:`O <b>Monólito Spaghetti</b> infectou o sistema bancário: linhas de <code class="inline">System.out.println</code> de logging estão <b>entrelaçadas</b> à lógica de negócio.<br><br>👉 <b>Clique nas linhas contaminadas</b> antes do tempo acabar.<br>💥 Linha errada: perde pontos e combo.<br>❤️ Linha de logging que escapar ao final: perde uma vida!`,
+    rounds:[
+      {
+        type:"hunt", time:30, src:"[Soares10]",
+        title:"Denúncia anônima: logs estranhos na classe Conta",
+        narr:"Um desenvolvedor júnior copiou código de logging para dentro do método <code class='inline'>debitar</code>. Encontre a linha contaminada!",
+        lesson:`<b>ENTRELAÇAMENTO (tangling):</b> o código de logging está <b>misturado à lógica de negócio</b>, dentro do mesmo módulo. E o pior: a mesma coisa seria feita em <b>todos</b> os métodos de <code class="inline">Conta</code> e de todas as demais classes do sistema!`,
+        lines:HUNT_R1
+      },
+      {
+        type:"hunt", time:30, src:"[Soares10]",
+        title:"A infecção avança: credito e debito",
+        narr:"Agora os métodos <code class='inline'>creditar</code> e <code class='inline'>debitar</code> estão com logging. Encontre TODAS as linhas contaminadas!",
+        lesson:`Cada <code class="inline">println</code> é um interesse transversal entrelaçado à lógica de negócio. O objetivo da POA: <b>retirar esses trechos e modularizá-los</b> em um aspecto. [Soares10]`,
+        lines:HUNT_R2
+      },
+      {
+        type:"hunt", time:30, src:"[Soares10]",
+        title:"O logging dominou os atributos",
+        narr:`<code class='inline'>setNumero</code>, <code class='inline'>creditar</code>, <code class='inline'>debitar</code>... os println tomaram conta da classe Conta! Há <b>3 linhas</b> contaminadas.`,
+        lesson:`Pronto para a cura? Com um aspecto <code class="inline">LogMudancaAtr</code>, esses 3 println viram um único advice:<br><code class="inline">before(): logSaldo(){ System.out.println("vai mudar o saldo"); }</code><br>Modularizado de uma vez, sem tocar na classe Conta! [Soares10]`,
+        lines:HUNT_R3
+      },
+      {
+        type:"hunt", time:35, src:"[Soares10]",
+        title:"A epidemia se espalha pelo sistema",
+        narr:"O MESMO interesse de logging agora infectou <b>4 classes</b> do sistema bancário: Conta, ContaPoupanca, ContaCorrente e Investimento. Isso é... espalhamento!",
+        lesson:`<b>ESPALHAMENTO (spread):</b> um interesse é implementado por <b>vários módulos</b> — e cada módulo implementa <b>vários interesses</b>. O sistema, na verdade, é a composição de interesses transversais e não transversais. [Soares10]`,
+        lines:HUNT_R4
+      }
+    ]
+  },
+  {
+    id:"pointcut", name:"Forja dos Pointcuts", icon:"⚡",
+    desc:"Forje expressões AspectJ precisas.",
+    intro:`Na <b>Forja dos Pointcuts</b> você aprenderá a capturar pontos de junção com precisão cirúrgica.<br><br>👉 Responda <b>antes do tempo esgotar</b> para ganhar bônus.<br>🔥 Acertos em sequência multiplicam sua pontuação.<br>❤️ Cada erro custa uma vida!`,
+    rounds:[
+      {
+        type:"quiz", time:25, src:"[Soares10]", ocodeAll:true,
+        q:`No sistema bancário, qual pointcut captura <b>a chamada</b> ao método <code class="inline">creditar</code> com parâmetro <code class="inline">double</code>, em classes cujo nome começa com <code class="inline">Conta</code>, com <b>qualquer tipo de retorno</b>?`,
+        options:[
+          `call (* Conta*.creditar(double))`,
+          `execution (* Conta.creditar(int))`,
+          `call (double Conta.creditar())`,
+          `cflow (* Conta*.creditar(double))`
+        ], a:0,
+        expl:`<code class="inline">call</code> captura a chamada; o primeiro <code class="inline">*</code> é qualquer tipo de retorno; <code class="inline">Conta*</code> casa com classes que começam com “Conta” (Conta, ContaPoupanca...); <code class="inline">(double)</code> fixa o tipo do parâmetro.`
+      },
+      {
+        type:"quiz", time:25, src:"[AspectJ14]", ocodeAll:true,
+        q:`Qual designador captura quando <b>o corpo</b> de um método específico é executado (e não apenas o ponto de chamada)?`,
+        options:[`execution`, `call`, `cflow`, `within`], a:0,
+        expl:`<code class="inline">call</code> captura o ponto onde o método é chamado; <code class="inline">execution</code> captura quando o corpo do método é executado. <code class="inline">cflow</code> restringe pelo fluxo de controle; <code class="inline">within</code>, pelo código da classe.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`No exemplo da Fachada, o pointcut <code class="inline">call(* Conta.setSaldo(..)) &amp;&amp; cflow(execution(* Fachada.saque(..)))</code> captura...`,
+        options:[
+          `Apenas as chamadas a setSaldo que ocorrem no fluxo de execução do método saque da Fachada`,
+          `Todas as chamadas a setSaldo do sistema inteiro`,
+          `Apenas o método saque, ignorando setSaldo`,
+          `Nada — o cflow cancela o call`
+        ], a:0,
+        expl:`<code class="inline">cflow(P)</code> captura todos os pontos que estejam <b>no fluxo de controle</b> do join point P. Aqui: só queremos as chamadas a <code class="inline">setSaldo</code> feitas durante o <code class="inline">saque</code> da Fachada.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`E <code class="inline">call(* Conta.setSaldo(..)) &amp;&amp; within(Conta)</code>, o que significa?`,
+        options:[
+          `Somente as chamadas a setSaldo feitas de dentro da classe Conta`,
+          `Somente as chamadas a setSaldo feitas pela Fachada`,
+          `Todas as escritas de saldo do sistema`,
+          `A execução do construtor de Conta`
+        ], a:0,
+        expl:`<code class="inline">within(Conta)</code> restringe aos pontos em que está sendo executado <b>código pertencente à classe Conta</b> — ou seja, chamadas vindas de dentro dela.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`O que <code class="inline">execution(void Conta+.set*(..))</code> captura?`,
+        options:[
+          `Execuções de qualquer método set de Conta e de suas subclasses`,
+          `Apenas o método set da classe Conta exata`,
+          `Todos os construtores de Conta`,
+          `A leitura de atributos de Conta`
+        ], a:0,
+        expl:`O <code class="inline">+</code> após o tipo inclui as <b>subclasses</b> (Conta+); <code class="inline">set*</code> é curinga no nome; <code class="inline">(..)</code> casa qualquer lista de parâmetros.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`E o padrão <code class="inline">set(* *.*)</code>, o que captura?`,
+        options:[
+          `Todos os acessos de ESCRITA a qualquer atributo de qualquer classe do sistema`,
+          `Todos os métodos set() chamados no sistema`,
+          `A leitura de atributos públicos`,
+          `Nada — sintaxe inválida em AspectJ`
+        ], a:0,
+        expl:`<code class="inline">set</code> captura <b>escrita</b> de atributos; <code class="inline">get</code> captura <b>leitura</b>. Wildcards: <code class="inline">*.*</code> = qualquer atributo de qualquer classe. Já <code class="inline">get(String Cliente.*)</code> captura a leitura dos atributos String de Cliente.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`<code class="inline">pointcut sets(): setCliente() || setConta();</code> — o que o operador <code class="inline">||</code> faz aqui?`,
+        options:[
+          `Compõe pointcuts: captura os pontos de junção de setCliente OU de setConta`,
+          `Nega os dois pointcuts`,
+          `Exige que os dois ocorram ao mesmo tempo (E lógico)`,
+          `Renomeia o pointcut para sets`
+        ], a:0,
+        expl:`Pointcuts primitivos podem ser <b>compostos</b> em pointcuts mais complexos com os operadores lógicos <code class="inline">||</code> (ou), <code class="inline">&amp;&amp;</code> (e) e <code class="inline">!</code> (negação). É o mesmo que <code class="inline">call(* Cliente.set*(*)) || call(* Conta.set*(*))</code>.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`Sobre restrições de contexto: o que distinguem <code class="inline">this(Fachada)</code> e <code class="inline">target(Poupanca)</code>?`,
+        options:[
+          `this restringe o tipo de ONDE vem a chamada (objeto em execução); target restringe o tipo de QUEM RECEBE a chamada (alvo)`,
+          `this restringe o alvo; target restringe a origem da chamada`,
+          `Ambos restringem o tipo de retorno do método`,
+          `São apelidos para call e execution`
+        ], a:0,
+        expl:`Ex.: <code class="inline">call(* Conta.creditar(*)) &amp;&amp; this(Fachada)</code> — chamadas vindas da Fachada. <code class="inline">call(void creditar(*)) &amp;&amp; target(Poupanca)</code> — chamadas dirigidas a um objeto Poupanca.`
+      }
+    ]
+  },
+  {
+    id:"codex", name:"Códice dos Conceitos", icon:"📜",
+    desc:"Prove seu domínio dos fundamentos da POA.",
+    intro:`O <b>Códice dos Conceitos</b> guarda os segredos milenares da POA: join points, pointcuts, advices, aspectos, inter-type declarations e o lendário <b>weaver</b>.<br><br>👉 Domine-os e o Monólito não terá chance!`,
+    rounds:[
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`O que é um <b>PONTO DE JUNÇÃO</b> (join point)?`,
+        options:[
+          `Pontos de interesse na execução de um programa (chamadas de métodos, acesso a atributos, chamada de construtor...)`,
+          `Uma classe especial gerada pelo AspectJ`,
+          `O compilador que entrelaça aspectos`,
+          `Um tipo de exceção não verificada`
+        ], a:0,
+        expl:`Exemplos de join points: chamadas de métodos, execução de métodos, acesso a atributos (escrita e leitura), chamada do construtor, execução de manipulador de exceção.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`O que é um <b>POINTCUT</b> (ponto de corte)?`,
+        options:[
+          `Um conjunto (agrupamento) de pontos de junção`,
+          `O código executado nos pontos capturados`,
+          `Uma anotação padrão do Java`,
+          `O arquivo .class final gerado`
+        ], a:0,
+        expl:`O interesse de logging ocorre em todas as chamadas a <code class="inline">creditar</code> e <code class="inline">debitar</code> — o pointcut agrupa todos esses pontos de junção em uma única expressão.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`O que é um <b>ADVICE</b> (adendo)?`,
+        options:[
+          `O código que será executado quando um determinado pointcut for detectado`,
+          `O nome de batismo do aspecto`,
+          `A palavra-chave para declarar atributos`,
+          `O resultado da tecelagem (weaving)`
+        ], a:0,
+        expl:`Ex.: <code class="inline">after(): logCredito(){ System.out.println("ocorreu um credito"); }</code> — DEPOIS de cada ponto capturado por logCredito, executar o bloco.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`<code class="inline">before()</code>, <code class="inline">after()</code> e <code class="inline">around()</code>: em que momento o <b>after</b> executa?`,
+        options:[
+          `Depois do ponto de junção capturado`,
+          `Antes do ponto capturado`,
+          `No lugar do ponto capturado, substituindo-o`,
+          `Somente quando o sistema reinicia`
+        ], a:0,
+        expl:`<code class="inline">before</code>: antes · <code class="inline">after</code>: depois (existe também after throwing, após lançar exceção) · <code class="inline">around</code>: no lugar do ponto — o aspecto DistributionAspect usa around para redirecionar a chamada ao facade remoto.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`O que é um <b>ASPECTO</b> em AspectJ?`,
+        options:[
+          `A unidade de modularização que agrupa pointcuts e advices para implementar um interesse transversal`,
+          `Uma interface padrão do Java`,
+          `Um arquivo XML de configuração`,
+          `A classe de negócio Conta`
+        ], a:0,
+        expl:`<code class="inline">public aspect LogContas { pointcut logCredito(): ... after(): logCredito(){ ... } }</code> — o aspecto é a <b>nova unidade de modularização e abstração</b> da POA.`
+      },
+      {
+        type:"quiz", time:25, src:"[AspectJ14]",
+        q:`O que uma <b>INTER-TYPE DECLARATION</b> permite ao aspecto?`,
+        options:[
+          `Declarar novos membros nas classes (ex.: private boolean Server.disabled = false;) ou alterar a hierarquia (declare parents: Conta implements Serializable;)`,
+          `Declarar variáveis locais dentro de métodos`,
+          `Capturar exceções do sistema operacional`,
+          `Compilar Java sem JVM`
+        ], a:0,
+        expl:`O aspecto adiciona atributos/métodos às classes e usa <code class="inline">declare parents</code> para mudar a hierarquia — ex.: fazer Conta implementar Serializable para envio das contas pela rede.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`No processo de compilação da POA, o que faz o <b>WEAVER</b> (ajc)?`,
+        options:[
+          `Entrelaça (tece) os aspectos às classes, gerando o sistema com logging pronto para a JVM`,
+          `Compila apenas as classes OO e descarta os aspectos`,
+          `Remove os pointcuts do código final`,
+          `Gera a documentação Javadoc`
+        ], a:0,
+        expl:`Sistema bancário sem logging + aspecto LogContas → <b>ajc (weaver)</b> → sistema bancário COM logging → JVM. Parte OO: objetos modularizam interesses não transversais. Parte de aspectos: aspectos modularizam os transversais.`
+      },
+      {
+        type:"quiz", time:25, src:"[Soares10]",
+        q:`<b>Espalhamento</b> e <b>entrelaçamento</b> significam, respectivamente...`,
+        options:[
+          `Código do interesse em VÁRIAS classes; código do interesse MISTURADO com a lógica de negócio no mesmo módulo`,
+          `Código duplicado; código morto`,
+          `Erros de compilação; warnings do compilador`,
+          `Classes abstratas; interfaces`
+        ], a:0,
+        expl:`Logging em várias classes = <b>espalhamento</b> (spread). Logging misturado à lógica de negócio dentro da Conta = <b>entrelaçamento</b> (tangling). Por isso logging é transversal: para ser implementado, precisa se espalhar por várias classes.`
+      },
+      {
+        type:"quiz", time:25, src:"[Martin02]",
+        q:`Sem POA, quais <b>princípios de projeto</b> o código com interesses transversais viola?`,
+        options:[
+          `SRP (Single Responsibility) e Open-Closed Principle`,
+          `DRY e KISS`,
+          `LSP e ISP`,
+          `Nenhum — o código fica perfeito`
+        ], a:0,
+        expl:`<b>SRP</b>: as classes passam a implementar interesses transversais E não transversais. <b>Open-Closed</b>: se a chamada ao código do interesse transversal mudar, é preciso alterar todas as classes que o usam.`
+      },
+      {
+        type:"quiz", time:25, src:"[Kiczales97]",
+        q:`Quem propôs a POA — e onde?`,
+        options:[
+          `Gregor Kiczales, em 1997, na conferência ECOOP`,
+          `James Gosling, em 1995, na Sun Microsystems`,
+          `Edsger Dijkstra, em 1974, na conferência NATO`,
+          `Kent Beck, em 1999, no movimento XP`
+        ], a:0,
+        expl:`[Kiczales97] “Aspect-Oriented Programming”, ECOOP, junho de 1997. AspectJ é a mais popular linguagem de POA. (Dijkstra, em 1974, propôs o conceito de interesse/concern.)`
+      }
+    ]
+  },
+  {
+    id:"boss", name:"Sr. Entrelaço", icon:"🍝",
+    desc:"Batalha final contra o Monólito Spaghetti.",
+    intro:`<b>Sr. Entrelaço</b> — o Monólito Spaghetti personificado — bloqueia a saída do sistema!<br><br>⚔️ Cada resposta correta <b>destrói um nó da trama</b> (−1 HP do chefe).<br>💔 Cada erro ou tempo esgotado destrói um dos seus corações.<br>🏆 Vença para modularizar o sistema de uma vez por todas!`,
+    rounds:[
+      {
+        type:"quiz", boss:true, time:14, src:"[Soares10]", ocodeAll:true,
+        q:`Complete o pointcut: <code class="inline">pointcut logDebito(): call (* Conta*.______(double));</code>`,
+        options:[`debitar`, `sacar`, `execution`, `cflow`], a:0,
+        expl:`O par de logging do sistema bancário: <code class="inline">logCredito</code> captura <code class="inline">creditar</code> e <code class="inline">logDebito</code> captura <code class="inline">debitar</code>.`
+      },
+      {
+        type:"quiz", boss:true, time:14, src:"[Soares10]", ocodeAll:true,
+        q:`Qual advice roda <b>ANTES</b> do ponto de junção capturado?`,
+        options:[`before()`, `after()`, `around()`, `declare parents`], a:0,
+        expl:`No aspecto <code class="inline">LogMudancaAtr</code>: <code class="inline">before(): logNumero(){ System.out.println("vai mudar o num."); }</code> — antes de cada setNumero capturado.`
+      },
+      {
+        type:"quiz", boss:true, time:14, src:"[AspectJ14]",
+        q:`<code class="inline">declare parents: Conta implements Serializable;</code> é exemplo de...`,
+        options:[
+          `Inter-type declaration — o aspecto altera a hierarquia da classe`,
+          `Um advice around`,
+          `Um designador de pointcut`,
+          `Uma anotação do compilador`
+        ], a:0,
+        expl:`<code class="inline">declare parents</code> muda a hierarquia: Conta passa a implementar Serializable para envio pela rede. O aspecto também introduz métodos: <code class="inline">public static void Conta.main(String[] args){...}</code>.`
+      },
+      {
+        type:"quiz", boss:true, time:14, src:"[Kiczales97]",
+        q:`A POA ataca qual limitação da POO?`,
+        options:[
+          `A incapacidade de modularizar interesses transversais`,
+          `A lentidão do compilador javac`,
+          `A falta de herança múltipla`,
+          `O excesso de threads no sistema`
+        ], a:0,
+        expl:`O objetivo central da POA: atacar a limitação da POO em modularizar interesses transversais — logging, segurança, transações, persistência...`
+      },
+      {
+        type:"quiz", boss:true, time:14, src:"[Soares10]",
+        q:`<code class="inline">call (* Conta*.creditar(double)) || call (* Conta*.debitar(double))</code> captura...`,
+        options:[
+          `Chamadas a creditar OU a debitar (composição de pointcuts)`,
+          `Chamadas que sejam simultaneamente crédito e débito`,
+          `Nada — o operador é inválido`,
+          `Somente os débitos`
+        ], a:0,
+        expl:`É o pointcut <code class="inline">logSaldo</code> do aspecto LogMudancaAtr: <code class="inline">call(* Conta*.creditar(double)) || call(* Conta*.debitar(double));</code>`
+      },
+      {
+        type:"quiz", boss:true, time:14, src:"[Soares10]",
+        q:`Quem “tece” os aspectos nas classes durante a compilação?`,
+        options:[`O weaver (compilador ajc)`, `A JVM`, `O Garbage Collector`, `O javadoc`], a:0,
+        expl:`O weaver entrelaça classes + aspectos e gera <code class="inline">.class</code> compatível com qualquer máquina virtual Java.`
+      },
+      {
+        type:"quiz", boss:true, time:14, src:"[Kiczales97]",
+        q:`Segundo o Módulo 05, um <b>interesse</b> (concern) é...`,
+        options:[
+          `Requisitos de stakeholders que devem ser atendidos para satisfazer o objetivo geral do sistema`,
+          `Somente requisitos não funcionais`,
+          `Um bug reportado pelo cliente`,
+          `Uma tabela do banco de dados`
+        ], a:0,
+        expl:`Interesses podem ser funcionais (creditar, debitar, transferir) ou não funcionais (logging, autenticação, desempenho, concorrência, persistência). Conceito proposto por Dijkstra em 1974.`
+      },
+      {
+        type:"quiz", boss:true, time:14, src:"[Soares10]",
+        q:`<code class="inline">get(String Cliente.*)</code> captura...`,
+        options:[
+          `Todos os acessos de leitura aos atributos de Cliente do tipo String`,
+          `Todos os métodos get() do sistema`,
+          `Atributos privados de qualquer classe`,
+          `Chamadas remotas RMI`
+        ], a:0,
+        expl:`Já <code class="inline">set(* *.*)</code> captura todos os acessos de escrita a qualquer atributo de qualquer classe — do sistema todo!`
+      }
+    ]
+  }
+];
+
+const BOSS_SPEECHES = [
+  `SOU O SR. ENTRELAÇO! MEU CÓDIGO É UM NÓ INFINITO DE println! <b>NADA</b> AQUI É MODULARIZADO!`,
+  `Seus pointcuts nunca me alcançarão! Meu espalhamento é... <b>INFINITO!</b>`,
+  `Logging? Segurança? Transações? <b>TUDO MISTURADO!</b> MUHAHA!`,
+  `SRP? OPEN-CLOSED? Nunca ouvi falar! Cada classe implementa <b>TUDO</b>!`,
+  `O cflow me protege... ou será que <b>NÃO</b>?`,
+  `Impossível! Meus join points... estão sendo <b>capturados!</b>`,
+  `Quantificação... obliviousness... o weaver está <b>TECELANDO</b> meus fios!`,
+  `NÃÃÃÃÃ! Estou... sendo... modularizado... em <b>.class puros</b>...`
+];
+
+const STORY = `ANO 1997. Na conferência ECOOP, Gregor Kiczales revela ao mundo uma nova força: a PROGRAMAÇÃO ORIENTADA A ASPECTOS.
+
+Décadas depois, o SISTEMA BANCÁRIO GLOBAL está colapsando. Código de logging espalhado por dezenas de classes... segurança e transações entrelaçadas à lógica de negócio... o temível SR. ENTRELAÇO, o Monólito Spaghetti, reina sobre o caos.
+
+Você foi recrutado pela ORDEM DOS TECELÕES. Sua missão: dominar os pointcuts, forjar os advices e entrelaçar aspectos para restaurar a harmonia do código.
+
+O weaver aguarda. ⚔️`;
+
+/* ========================= ENGINE ========================= */
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+/* ---------------- estado ---------------- */
+const S = {
+  lives:3, maxLives:3, score:0, combo:0, maxCombo:0,
+  phaseIdx:0, roundIdx:0, phaseMistakes:0, phaseScoreStart:0, bossHP:0,
+  stars:[null,null,null,null],
+  stats:{ quizOk:0, quizBad:0, tangles:0, tangleWrong:0 },
+  timeLeft:0, timeTotal:1, timerId:null, lastTick:-1,
+  locked:false, muted:false
+};
+const BEST_KEY = "tecelaoAspectosBest";
+
+/* ---------------- áudio (WebAudio, sem arquivos) ---------------- */
+let AC = null;
+function ac(){
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if(AC.state === "suspended") AC.resume();
+  }catch(e){ AC = null; }
+  return AC;
+}
+function tone(freq, dur, type, vol, delay){
+  const c = ac(); if(!c || S.muted) return;
+  const t = c.currentTime + (delay || 0);
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.08, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(c.destination);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function sfx(k){
+  switch(k){
+    case "click": tone(880,.06,"triangle",.05); break;
+    case "ok": tone(523.25,.12,"sine",.09); tone(659.25,.12,"sine",.09,.08); tone(783.99,.2,"sine",.09,.16); break;
+    case "bad": tone(196,.25,"sawtooth",.07); tone(130.8,.3,"sawtooth",.06,.1); break;
+    case "tick": tone(1100,.05,"square",.03); break;
+    case "phase": [392,523.25,659.25,783.99].forEach((f,i)=>tone(f,.16,"triangle",.07,i*.09)); break;
+    case "hit": tone(95,.2,"square",.09); tone(60,.28,"square",.07,.05); break;
+    case "win": [523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,.24,"triangle",.08,i*.13)); break;
+    case "lose": [392,329.63,261.63,196].forEach((f,i)=>tone(f,.26,"sine",.08,i*.16)); break;
+  }
+}
+
+/* ---------------- navegação de telas ---------------- */
+function go(id){
+  stopTimer();
+  hideFeedback();
+  $$(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ---------------- HUD ---------------- */
+function livesStr(){
+  return "❤️".repeat(Math.max(0,S.lives)) + "🖤".repeat(Math.max(0, S.maxLives - S.lives));
+}
+function updateHUD(){
+  $("#hud-score").textContent = S.score;
+  $("#hud-lives").textContent = livesStr();
+  $("#hud-lives-map").textContent = livesStr();
+  $("#map-score").textContent = S.score;
+  const chip = $("#hud-combo-chip");
+  if(S.combo >= 2){ chip.style.display = ""; $("#hud-combo").textContent = "🔥 x" + S.combo; }
+  else chip.style.display = "none";
+}
+function addScore(p){ S.score = Math.max(0, S.score + p); updateHUD(); }
+
+/* ---------------- timer ---------------- */
+function stopTimer(){ if(S.timerId){ clearInterval(S.timerId); S.timerId = null; } }
+function startTimer(sec, onTimeout){
+  stopTimer();
+  S.timeTotal = sec; S.timeLeft = sec; S.lastTick = -1;
+  paintBar();
+  S.timerId = setInterval(()=>{
+    S.timeLeft = Math.max(0, S.timeLeft - 0.1);
+    paintBar();
+    const whole = Math.ceil(S.timeLeft);
+    if(whole <= 5 && whole > 0 && whole !== S.lastTick){ S.lastTick = whole; sfx("tick"); }
+    if(S.timeLeft <= 0){ stopTimer(); onTimeout(); }
+  }, 100);
+}
+function paintBar(){
+  const bar = $("#timerbar");
+  const pct = Math.max(0, (S.timeLeft / S.timeTotal) * 100);
+  bar.style.width = pct + "%";
+  bar.classList.toggle("warn", pct < 40 && pct >= 18);
+  bar.classList.toggle("danger", pct < 18);
+}
+
+/* ---------------- efeitos visuais ---------------- */
+function burstAt(el, emojis, n){
+  const r = el.getBoundingClientRect();
+  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+  for(let i = 0; i < (n || 14); i++){
+    const p = document.createElement("span");
+    p.className = "particle";
+    p.textContent = (emojis || ["✨","⭐","💫","🧵"])[i % 4];
+    p.style.left = x + "px"; p.style.top = y + "px";
+    p.style.setProperty("--dx", ((Math.random()*2-1)*190).toFixed(0) + "px");
+    p.style.setProperty("--dy", ((Math.random()*2-1)*150 - 50).toFixed(0) + "px");
+    p.style.setProperty("--rot", ((Math.random()*720-360)|0) + "deg");
+    $("#fx-layer").appendChild(p);
+    setTimeout(()=>p.remove(), 950);
+  }
+}
+function floatScore(el, text, neg){
+  const r = el.getBoundingClientRect();
+  const f = document.createElement("span");
+  f.className = "floatscore" + (neg ? " neg" : "");
+  f.textContent = text;
+  f.style.left = (r.left + r.width/2 - 20) + "px";
+  f.style.top = (r.top - 6) + "px";
+  $("#fx-layer").appendChild(f);
+  setTimeout(()=>f.remove(), 1100);
+}
+function flashDamage(){
+  const d = $("#damage-flash");
+  d.classList.remove("on"); void d.offsetWidth; d.classList.add("on");
+}
+function shakeApp(){
+  const a = $("#app");
+  a.classList.remove("shakeit"); void a.offsetWidth; a.classList.add("shakeit");
+  setTimeout(()=>a.classList.remove("shakeit"), 500);
+}
+
+/* ---------------- feedback ---------------- */
+const GOOD_TITLES = ["Corte preciso! 🎯","Pointcut forjado! ⚡","Trama desfeita! ✨","O weaver sorri! 🧵","Aspecto entrelaçado! 🪡"];
+const BAD_TITLES  = ["A trama apertou! 🕸️","O Monólito riu! 🍝","Interesse não capturado! ❌","Entrelaçado no espalhamento! 😵"];
+function showFeedback(ok, title, body, src){
+  const fb = $("#feedback");
+  const head = $("#fb-head");
+  head.className = "fb-head " + (ok ? "ok" : "bad");
+  head.textContent = (ok ? "✅ " : "❌ ") + title;
+  $("#fb-body").innerHTML = body + (src ? `<br><span class="src">Fonte do conteúdo: ${esc(src)}</span>` : "");
+  fb.classList.remove("hidden");
+  fb.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+function hideFeedback(){ $("#feedback").classList.add("hidden"); }
+
+/* ---------------- vidas ---------------- */
+function loseLife(){
+  S.lives--; updateHUD(); flashDamage(); shakeApp(); sfx("bad");
+  return S.lives <= 0;
+}
+function gameOver(){
+  stopTimer(); hideFeedback(); sfx("lose");
+  $("#over-stats").innerHTML = `
+    <div class="ss">Pontuação<b>${S.score}</b></div>
+    <div class="ss">Fase<b>${esc(PHASES[S.phaseIdx].name)}</b></div>
+    <div class="ss">Logging capturado<b>${S.stats.tangles}</b></div>
+    <div class="ss">Maior combo<b>🔥 x${S.maxCombo}</b></div>`;
+  saveBest();
+  go("screen-gameover");
+}
+function saveBest(){
+  try{
+    const b = parseInt(localStorage.getItem(BEST_KEY) || "0", 10);
+    if(S.score > b) localStorage.setItem(BEST_KEY, String(S.score));
+    const nb = parseInt(localStorage.getItem(BEST_KEY) || "0", 10);
+    $("#best-line").textContent = nb > 0 ? `🏆 Melhor pontuação: ${nb} pontos` : "";
+  }catch(e){}
+}
+
+/* ---------------- mapa ---------------- */
+function renderMap(){
+  $("#map-nodes").innerHTML = PHASES.map((ph, i)=>{
+    const unlocked = (i === 0) || (S.stars[i-1] !== null);
+    const st = S.stars[i];
+    const starTxt = st !== null ? "⭐".repeat(st) + "☆".repeat(3-st) : (unlocked ? "— aguardando você —" : "🔒 bloqueada");
+    return `<div class="node ${ph.id==="boss" ? "boss" : ""} ${unlocked ? "" : "locked"}" data-i="${i}">
+      <div class="n-icon">${ph.icon}</div>
+      <div class="n-name">${ph.name}</div>
+      <div class="n-desc">${ph.desc}</div>
+      <div class="n-stars">${starTxt}</div>
+    </div>`;
+  }).join("");
+  $$("#map-nodes .node").forEach(n=>{
+    n.addEventListener("click", ()=>{
+      const i = parseInt(n.dataset.i, 10);
+      const unlocked = (i === 0) || (S.stars[i-1] !== null);
+      if(!unlocked){ sfx("bad"); return; }
+      sfx("click");
+      startPhase(i);
+    });
+  });
+  saveBest();
+}
+
+/* ---------------- fluxo de fase ---------------- */
+function startPhase(i){
+  S.phaseIdx = i; S.roundIdx = 0; S.phaseMistakes = 0;
+  S.phaseScoreStart = S.score; S.combo = 0;
+  if(S.lives <= 0) S.lives = 3;
+  const ph = PHASES[i];
+  if(ph.id === "boss") S.bossHP = ph.rounds.length;
+  $("#hud-phase").textContent = ph.icon + " " + ph.name;
+  updateHUD();
+  go("screen-game");
+  showPhaseIntro(ph);
+}
+function showPhaseIntro(ph){
+  $("#game-stage").innerHTML = `
+    <div class="stage-card summary">
+      <div style="font-size:3rem">${ph.icon}</div>
+      <h3>${ph.name}</h3>
+      <p class="end-msg">${ph.intro}</p>
+      <div class="intro-actions" style="justify-content:center; margin-top:18px">
+        <button class="btn primary" id="btn-begin-phase">⚔️ Começar</button>
+      </div>
+    </div>`;
+  sfx("phase");
+  $("#btn-begin-phase").addEventListener("click", ()=>{ sfx("click"); nextRound(); });
+}
+function nextRound(){
+  hideFeedback();
+  const ph = PHASES[S.phaseIdx];
+  if(S.roundIdx >= ph.rounds.length){ phaseComplete(); return; }
+  const r = ph.rounds[S.roundIdx];
+  S.locked = false;
+  updateHUD();
+  if(r.type === "hunt") renderHunt(r);
+  else renderQuiz(r);
+}
+
+/* ---------------- fase 1: caça ao espalhamento ---------------- */
+function renderHunt(r){
+  const ph = PHASES[S.phaseIdx];
+  const total = r.lines.filter(l => l.tangle).length;
+  let found = 0;
+  $("#game-stage").innerHTML = `
+    <div class="stage-card">
+      <div class="stage-narr"><span class="tag">Missão ${S.roundIdx+1}/${ph.rounds.length}</span>${r.narr}</div>
+      <div class="q-title">${r.title}</div>
+      <div class="codecard" id="codecard">
+        ${r.lines.map((l, i)=>{
+          const cls = l.plain ? "plain" : "click";
+          return `<div class="cline ${cls}" data-i="${i}"><span class="ln">${i+1}</span><span>${esc(l.t)}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="huntmeta">
+        <span>🎯 Logging detectado: <b id="hunt-count">0/${total}</b></span>
+        <span>Fonte do conteúdo: ${esc(r.src)}</span>
+      </div>
+    </div>`;
+  startTimer(r.time, ()=>{ huntTimeout(r, total); });
+  $$("#codecard .cline.click").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      if(S.locked) return;
+      const line = r.lines[parseInt(el.dataset.i, 10)];
+      if(line.tangle){
+        el.classList.remove("click");
+        el.classList.add("found");
+        found++;
+        S.stats.tangles++;
+        S.combo++; S.maxCombo = Math.max(S.maxCombo, S.combo);
+        const pts = 80 + (S.combo - 1) * 15;
+        addScore(pts);
+        floatScore(el, "+" + pts);
+        burstAt(el, ["🪡","✨","🧵","⚡"], 10);
+        sfx("ok");
+        updateHUD();
+        $("#hunt-count").textContent = found + "/" + total;
+        if(found >= total){
+          S.locked = true; stopTimer();
+          setTimeout(()=>showFeedback(true, "Trama purificada! ✨", r.lesson, r.src), 420);
+        }
+      } else {
+        S.stats.tangleWrong++;
+        S.combo = 0;
+        addScore(-40);
+        floatScore(el, "-40", true);
+        el.classList.remove("oops"); void el.offsetWidth; el.classList.add("oops");
+        sfx("bad"); updateHUD();
+      }
+    });
+  });
+}
+function huntTimeout(r, total){
+  S.locked = true;
+  S.combo = 0; updateHUD();
+  $$("#codecard .cline.click").forEach(el=>{
+    const line = r.lines[parseInt(el.dataset.i, 10)];
+    if(line.tangle && !el.classList.contains("found")) el.classList.add("missed");
+  });
+  const dead = loseLife();
+  if(dead){ gameOver(); return; }
+  S.phaseMistakes++;
+  showFeedback(false, "O tempo esgotou! ⌛ As linhas em vermelho estavam entrelaçadas.", r.lesson, r.src);
+}
+
+/* ---------------- fases 2-4: quiz e boss ---------------- */
+const BOSS_SVG = `
+<svg class="boss-svg" viewBox="0 0 140 120" aria-hidden="true">
+  <defs><linearGradient id="bgrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#5b2a86"/><stop offset="1" stop-color="#221038"/>
+  </linearGradient></defs>
+  <path d="M20 96 C8 62 24 30 70 27 C116 24 134 56 122 96 Z" fill="url(#bgrad)" stroke="#a78bfa" stroke-width="2.5"/>
+  <path d="M28 44 q16 20 32 8 t32 12" fill="none" stroke="#f472b6" stroke-width="3.4" stroke-linecap="round" opacity=".9"/>
+  <path d="M24 62 q20 14 38 4 t36 10" fill="none" stroke="#f472b6" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+  <path d="M34 34 q14 16 30 6 t28 10" fill="none" stroke="#fb7185" stroke-width="2.6" stroke-linecap="round" opacity=".6"/>
+  <circle cx="52" cy="64" r="10" fill="#fff"/><circle cx="90" cy="64" r="10" fill="#fff"/>
+  <circle cx="54" cy="66" r="4.5" fill="#0b1020"/><circle cx="92" cy="66" r="4.5" fill="#0b1020"/>
+  <path d="M41 51 l19 7 M101 51 l-19 7" stroke="#fb7185" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M52 84 l8 6 l8 -6 l8 6 l8 -6" stroke="#fb7185" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+</svg>`;
+
+function bossAlive(){ return S.bossHP > 0; }
+
+function renderQuiz(r){
+  const ph = PHASES[S.phaseIdx];
+  const isBoss = !!r.boss;
+  let bossHtml = "";
+  if(isBoss){
+    const segs = Array.from({length: ph.rounds.length}, (_, i)=>`<div class="seg ${i < S.bossHP ? "" : "off"}"></div>`).join("");
+    bossHtml = `
+      <div class="boss-wrap">
+        <div class="boss-face" id="boss-face">${BOSS_SVG}</div>
+        <div>
+          <div class="boss-name">🍝 SR. ENTRELAÇO</div>
+          <div class="boss-sub">O Monólito Spaghetti · HP da trama: ${S.bossHP}/${ph.rounds.length}</div>
+          <div class="boss-hp" id="boss-hp">${segs}</div>
+        </div>
+      </div>
+      <div class="boss-speech">🗣️ “${BOSS_SPEECHES[S.roundIdx] || ""}”</div>`;
+  }
+  const opts = r.options.map((t, idx)=>({ t, ok: idx === r.a }));
+  shuffle(opts);
+  $("#game-stage").innerHTML = `
+    <div class="stage-card">
+      ${bossHtml}
+      <div class="stage-narr"><span class="tag">${isBoss ? "Golpe " : "Desafio "}${S.roundIdx+1}/${ph.rounds.length}</span>${isBoss ? "Responda rápido — o Monólito não espera!" : "Domine a arte e acumule combos."}</div>
+      <div class="q-title">${r.q}</div>
+      <div class="options" id="options">
+        ${opts.map((o, i)=>{
+          const code = r.ocodeAll || (/^[\w*() .:+;&|!-]+$/.test(o.t) && !/[áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ]/.test(o.t) && /[(*.]|&&|\|\|/.test(o.t) && o.t.length < 60 && /^[a-z*]/.test(o.t));
+          const txt = code ? `<span class="ocode">${esc(o.t)}</span>` : esc(o.t);
+          return `<button class="opt" data-ok="${o.ok}"><span class="letter">${"ABCD"[i]}</span><span>${txt}</span></button>`;
+        }).join("")}
+      </div>
+      <div class="kbd-hint">Atalhos: teclas 1–${opts.length} · Enter para continuar</div>
+    </div>`;
+  startTimer(r.time, ()=>{ quizTimeout(r); });
+  $$("#options .opt").forEach(btn=>{
+    btn.addEventListener("click", ()=>answerQuiz(r, btn));
+  });
+}
+function answerQuiz(r, btn){
+  if(S.locked) return;
+  S.locked = true;
+  stopTimer();
+  const ok = btn.dataset.ok === "true";
+  $$("#options .opt").forEach(b=>{
+    b.disabled = true;
+    if(b.dataset.ok === "true") b.classList.add("correct");
+    else if(b !== btn) b.classList.add("dim");
+  });
+  if(ok){
+    btn.classList.add("correct");
+    S.combo++; S.maxCombo = Math.max(S.maxCombo, S.combo);
+    S.stats.quizOk++;
+    const pts = 120 + Math.ceil(S.timeLeft) * 8 + (S.combo - 1) * 20;
+    addScore(pts);
+    floatScore(btn, "+" + pts);
+    burstAt(btn, ["✨","⭐","💫","⚡"], 14);
+    sfx("ok");
+    if(r.boss) bossHit();
+    const t = GOOD_TITLES[(Math.random()*GOOD_TITLES.length)|0];
+    showFeedback(true, t, r.expl, r.src);
+  } else {
+    btn.classList.add("wrongpick");
+    S.combo = 0;
+    S.stats.quizBad++;
+    updateHUD();
+    const dead = loseLife();
+    if(dead){ gameOver(); return; }
+    S.phaseMistakes++;
+    const t = BAD_TITLES[(Math.random()*BAD_TITLES.length)|0];
+    showFeedback(false, t, r.expl, r.src);
+  }
+}
+function quizTimeout(r){
+  S.locked = true;
+  $$("#options .opt").forEach(b=>{
+    b.disabled = true;
+    if(b.dataset.ok === "true") b.classList.add("correct");
+    else b.classList.add("dim");
+  });
+  S.combo = 0;
+  S.stats.quizBad++;
+  updateHUD();
+  const dead = loseLife();
+  if(dead){ gameOver(); return; }
+  S.phaseMistakes++;
+  showFeedback(false, "O tempo esgotou! ⌛", r.expl, r.src);
+}
+function bossHit(){
+  const ph = PHASES[S.phaseIdx];
+  S.bossHP = Math.max(0, S.bossHP - 1);
+  const face = $("#boss-face");
+  if(face){
+    face.classList.add("hit");
+    setTimeout(()=>face.classList.remove("hit"), 620);
+    burstAt(face, ["💥","⚡","🧵","✨"], 16);
+  }
+  const hp = $("#boss-hp");
+  if(hp){
+    const segs = hp.querySelectorAll(".seg");
+    segs.forEach((seg, i)=>seg.classList.toggle("off", i >= S.bossHP));
+  }
+  const sub = $("#game-stage .boss-sub");
+  if(sub) sub.textContent = `O Monólito Spaghetti · HP da trama: ${S.bossHP}/${ph.rounds.length}`;
+  setTimeout(()=>sfx("hit"), 130);
+}
+
+/* ---------------- fim de fase ---------------- */
+function phaseComplete(){
+  const ph = PHASES[S.phaseIdx];
+  if(ph.id === "boss"){
+    if(bossAlive()){
+      showBossSurvived();
+      return;
+    }
+    S.stars[S.phaseIdx] = Math.max(S.stars[S.phaseIdx] || 0, S.phaseMistakes === 0 ? 3 : (S.phaseMistakes <= 2 ? 2 : 1));
+    showBossVictory();
+    return;
+  }
+  const stars = S.phaseMistakes === 0 ? 3 : (S.phaseMistakes === 1 ? 2 : 1);
+  S.stars[S.phaseIdx] = Math.max(S.stars[S.phaseIdx] || 0, stars);
+  let bonus = "";
+  if(S.lives < 3){ S.lives++; bonus = `<p class="hintline" style="color:var(--pink)">❤️ A Ordem dos Tecelões concedeu +1 vida de reserva!</p>`; }
+  updateHUD();
+  const gained = S.score - S.phaseScoreStart;
+  $("#game-stage").innerHTML = `
+    <div class="stage-card summary">
+      <div style="font-size:3rem">${ph.icon}</div>
+      <h3>${ph.name} — concluída!</h3>
+      <div class="sum-stars">
+        <span class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span>
+      </div>
+      <div class="sum-stats">
+        <div class="ss">Pontos na fase<b>+${gained}</b></div>
+        <div class="ss">Deslizes<b>${S.phaseMistakes}</b></div>
+        <div class="ss">Pontuação total<b>${S.score}</b></div>
+      </div>
+      ${bonus}
+      <div class="intro-actions" style="justify-content:center">
+        <button class="btn primary" id="btn-back-map-2">🧭 Voltar à trilha</button>
+      </div>
+    </div>`;
+  // estrelas animadas conforme desempenho
+  const spans = $$("#game-stage .sum-stars .s");
+  spans.forEach((sp, i)=>{ if(i >= stars) sp.style.visibility = "hidden"; });
+  sfx("phase");
+  burstAt($("#game-stage h3"), ["⭐","🌟","✨"], 16);
+  $("#btn-back-map-2").addEventListener("click", ()=>{
+    sfx("click"); renderMap(); go("screen-map");
+  });
+}
+function showBossSurvived(){
+  $("#game-stage").innerHTML = `
+    <div class="stage-card summary">
+      <div style="font-size:3rem">🍝🛡️</div>
+      <h3>O Monólito ainda resiste!</h3>
+      <p class="end-msg">Você enfrentou o Sr. Entrelaço, mas sobrou trama para modularizar: <b>${S.bossHP}</b> nó(s) de espalhamento restante(s).<br><br>Revise o <b>Códice de Conceitos</b>, respire fundo e volte para o embate — a Ordem dos Tecelões acredita em você!</p>
+      <div class="intro-actions" style="justify-content:center">
+        <button class="btn primary" id="btn-boss-retry">⚔️ Enfrentar novamente</button>
+        <button class="btn" id="btn-boss-map">🧭 Voltar à trilha</button>
+      </div>
+    </div>`;
+  $("#btn-boss-retry").addEventListener("click", ()=>{
+    S.roundIdx = 0; S.phaseMistakes = 0;
+    S.bossHP = PHASES[S.phaseIdx].rounds.length;
+    S.lives = Math.max(S.lives, 2);
+    sfx("phase");
+    nextRound();
+  });
+  $("#btn-boss-map").addEventListener("click", ()=>{ sfx("click"); renderMap(); go("screen-map"); });
+}
+function showBossVictory(){
+  $("#game-stage").innerHTML = `
+    <div class="stage-card summary">
+      <div style="font-size:3rem">🎖️🧵</div>
+      <h3>MONÓLITO MODULARIZADO!</h3>
+      <p class="end-msg">O Sr. Entrelaço desintegrou-se em <code class="inline">.class</code> puros, gerados pelo weaver.<br>As classes ficaram com a <b>lógica de negócio</b>; os aspectos, com os <b>interesses transversais</b>. O sistema bancário respira coeso e evoluível!</p>
+      <div class="sum-stats">
+        <div class="ss">Pontuação total<b>${S.score}</b></div>
+        <div class="ss">Acertos no quiz<b>${S.stats.quizOk}</b></div>
+        <div class="ss">Maior combo<b>🔥 x${S.maxCombo}</b></div>
+      </div>
+      <div class="intro-actions" style="justify-content:center">
+        <button class="btn primary" id="btn-see-end">🏆 Ver seu destino de Tecelão</button>
+      </div>
+    </div>`;
+  sfx("win");
+  burstAt($("#game-stage h3"), ["🎉","🏆","✨","⭐"], 20);
+  $("#btn-see-end").addEventListener("click", ()=>{ sfx("click"); showEnd(); });
+}
+
+/* ---------------- tela final ---------------- */
+function showEnd(){
+  const tot = S.stats.quizOk + S.stats.quizBad;
+  const acc = tot > 0 ? S.stats.quizOk / tot : 1;
+  let medal, rank, msg;
+  if(acc >= 0.9){
+    medal = "🏆"; rank = "Grão-Mestre dos Aspectos";
+    msg = `Precisão lendária: <b>${Math.round(acc*100)}%</b>! Você domina join points, pointcuts, advices, aspectos e o weaver. O sistema bancário agora é coeso, flexível e pronto para evoluir — a Ordem dos Tecelões inscreve seu nome na trama eterna.`;
+  } else if(acc >= 0.75){
+    medal = "🥇"; rank = "Mestre Tecelão";
+    msg = `Precisão de <b>${Math.round(acc*100)}%</b>! O Monólito foi modularizado e poucos nós resistiram à sua agulha. Com mais um pouco de prática nos pointcuts, o título de Grão-Mestre é seu.`;
+  } else if(acc >= 0.5){
+    medal = "🥈"; rank = "Tecelão Aprendiz";
+    msg = `Precisão de <b>${Math.round(acc*100)}%</b>. Você já separa interesses transversais da lógica de negócio, mas a trama ainda guarda segredos. Releia o Códice e jogue novamente: a maestria está a um combo de distância!`;
+  } else {
+    medal = "🥉"; rank = "Tecelão em Formação";
+    msg = `Precisão de <b>${Math.round(acc*100)}%</b>. Todo grande tecelão começou enredado em fios de println. Estude o Códice de Conceitos, rejogue as fases e volte mais forte — o weaver não desiste de ninguém!`;
+  }
+  $("#end-medal").textContent = medal;
+  $("#end-rank").textContent = rank;
+  $("#end-msg").innerHTML = msg;
+  const prec = tot > 0 ? Math.round((S.stats.quizOk / tot) * 100) : 100;
+  $("#end-stats").innerHTML = `
+    <div class="ss">Pontuação final<b>${S.score}</b></div>
+    <div class="ss">Acertos<b>${S.stats.quizOk}</b></div>
+    <div class="ss">Erros<b>${S.stats.quizBad}</b></div>
+    <div class="ss">Precisão<b>${prec}%</b></div>
+    <div class="ss">Logging capturado<b>${S.stats.tangles}</b></div>
+    <div class="ss">Maior combo<b>🔥 x${S.maxCombo}</b></div>`;
+  saveBest();
+  sfx("win");
+  go("screen-end");
+  setTimeout(()=>burstAt($("#end-rank"), ["🎉","🏆","✨","⭐","💫"], 22), 350);
+}
+
+/* ---------------- chuva de código (fundo) ---------------- */
+(function(){
+  const cv = $("#rain"), ctx = cv.getContext("2d");
+  const GLYPHS = ["pointcut","call","execution","after()","before()","around()","cflow","within","&&","||","aspect","advice","..","*","declare","target","this()","set()","get()","{}"];
+  let cols = [], W = 0, H = 0, last = 0;
+  function newCol(anywhere){
+    return { x: Math.random() * W, y: anywhere ? Math.random() * H : -60,
+             sp: 0.35 + Math.random() * 0.9,
+             s: GLYPHS[(Math.random() * GLYPHS.length) | 0] };
+  }
+  function resize(){
+    W = cv.width = window.innerWidth; H = cv.height = window.innerHeight;
+    const n = Math.max(6, Math.ceil(W / 130));
+    cols = Array.from({length: n}, ()=>newCol(true));
+  }
+  function draw(ts){
+    if(ts - last > 34){
+      last = ts;
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = "12px ui-monospace, Consolas, monospace";
+      cols.forEach((c, i)=>{
+        for(let j = 0; j < c.s.length; j++){
+          ctx.fillStyle = j === 0 ? "rgba(167,139,250,0.8)" : "rgba(34,211,238,0.3)";
+          ctx.fillText(c.s[j], c.x, c.y - j * 14);
+        }
+        c.y += c.sp;
+        if(c.y - c.s.length * 14 > H) cols[i] = newCol(false);
+      });
+    }
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  requestAnimationFrame(draw);
+})();
+
+/* ---------------- história (typewriter) ---------------- */
+let typerId = null;
+function typeStory(){
+  const el = $("#story-text");
+  const chars = Array.from(STORY);
+  let i = 0;
+  el.textContent = "";
+  stopTyper();
+  typerId = setInterval(()=>{
+    if(i >= chars.length){ stopTyper(); return; }
+    el.textContent += chars[i++];
+  }, 18);
+}
+function stopTyper(){ if(typerId){ clearInterval(typerId); typerId = null; } }
+
+/* ---------------- modal do códice ---------------- */
+function toggleGlossary(show){
+  $("#modal-glossary").classList.toggle("hidden", !show);
+}
+
+/* ---------------- teclado ---------------- */
+document.addEventListener("keydown", (e)=>{
+  if(!$("#modal-glossary").classList.contains("hidden")){
+    if(e.key === "Escape") toggleGlossary(false);
+    return;
+  }
+  if($("#screen-game").classList.contains("active")){
+    if(e.key === "Enter" && !$("#feedback").classList.contains("hidden")){
+      $("#btn-continue").click();
+      return;
+    }
+    const n = parseInt(e.key, 10);
+    if(n >= 1 && n <= 9 && !S.locked){
+      const btns = document.querySelectorAll("#options .opt");
+      if(btns && btns[n-1]) btns[n-1].click();
+    }
+  }
+});
+
+/* ---------------- mutação de som ---------------- */
+function toggleMute(){
+  S.muted = !S.muted;
+  $$("#btn-mute-map, #btn-mute-game").forEach(b=>{
+    b.textContent = S.muted ? "🔇" : "🔊";
+  });
+}
+
+/* ---------------- reiniciar jornada ---------------- */
+function resetRun(){
+  S.lives = 3; S.score = 0; S.combo = 0; S.maxCombo = 0;
+  S.phaseIdx = 0; S.roundIdx = 0; S.bossHP = 0;
+  S.stars = [null, null, null, null];
+  S.stats = { quizOk:0, quizBad:0, tangles:0, tangleWrong:0 };
+  updateHUD(); renderMap();
+}
+
+/* ---------------- wiring ---------------- */
+function wire(){
+  $("#btn-start").addEventListener("click", ()=>{
+    sfx("click"); stopTyper();
+    updateHUD(); renderMap(); go("screen-map");
+  });
+  $("#btn-skip-story").addEventListener("click", ()=>{
+    stopTyper(); $("#story-text").textContent = STORY;
+  });
+  $("#btn-glossary-intro").addEventListener("click", ()=>{ sfx("click"); toggleGlossary(true); });
+  $("#btn-glossary-map").addEventListener("click", ()=>{ sfx("click"); toggleGlossary(true); });
+  $("#btn-glossary-end").addEventListener("click", ()=>{ sfx("click"); toggleGlossary(true); });
+  $("#btn-close-glossary").addEventListener("click", ()=>toggleGlossary(false));
+  $("#modal-glossary").addEventListener("click", (e)=>{
+    if(e.target === $("#modal-glossary")) toggleGlossary(false);
+  });
+  $("#btn-mute-map").addEventListener("click", toggleMute);
+  $("#btn-mute-game").addEventListener("click", toggleMute);
+  $("#btn-continue").addEventListener("click", ()=>{
+    if($("#feedback").classList.contains("hidden")) return;
+    sfx("click");
+    S.roundIdx++;
+    nextRound();
+  });
+  $("#btn-retry-phase").addEventListener("click", ()=>{
+    sfx("click");
+    S.score = S.phaseScoreStart;
+    startPhase(S.phaseIdx);
+  });
+  $("#btn-back-map").addEventListener("click", ()=>{
+    sfx("click");
+    S.lives = 3; S.score = S.phaseScoreStart;
+    renderMap(); go("screen-map");
+  });
+  $("#btn-reset").addEventListener("click", ()=>{
+    if(window.confirm("Reiniciar a jornada? A pontuação e as estrelas serão zeradas.")){
+      resetRun();
+    }
+  });
+  $("#btn-play-again").addEventListener("click", ()=>{
+    sfx("click"); resetRun(); go("screen-map");
+  });
+}
+
+/* ---------------- boot ---------------- */
+wire();
+updateHUD();
+renderMap();
+saveBest();
+typeStory();
+</script>
+</body>
+</html>
