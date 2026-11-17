@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 4 — Missão Atenção | Como resolver o notebook do GPT-2</title>
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --bg-2:#11172a;
+    --panel:#161d33;
+    --panel-2:#1e2647;
+    --border:#2a3556;
+    --accent:#5eead4;
+    --accent-2:#a78bfa;
+    --warn:#fbbf24;
+    --ok:#86efac;
+    --err:#fda4af;
+    --txt:#e6e9f5;
+    --muted:#94a3b8;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 800px at 80% -10%, #1b2244 0%, transparent 60%),
+               radial-gradient(900px 600px at -10% 110%, #1a2b3a 0%, transparent 60%),
+               var(--bg);
+    color:var(--txt);
+    font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
+    line-height:1.55;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  a{color:var(--accent)}
+  /* ----- Top bar ----- */
+  .topbar{
+    position:sticky;top:0;z-index:30;
+    backdrop-filter:blur(8px);
+    background:rgba(10,14,26,.75);
+    border-bottom:1px solid var(--border);
+    padding:10px 16px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .brand{font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:10px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .progress-wrap{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--border);border-radius:999px;height:10px;overflow:hidden}
+  .progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .4s ease}
+  .xp{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+  .xp b{color:var(--accent)}
+  .btn-reset{background:var(--panel-2);border:1px solid var(--border);color:var(--txt);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:.85rem}
+  .btn-reset:hover{border-color:var(--accent)}
+
+  /* ----- Layout ----- */
+  .container{max-width:1080px;margin:0 auto;padding:18px 16px 80px}
+  .card{
+    background:linear-gradient(180deg,var(--panel) 0%,var(--bg-2) 100%);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px;
+    box-shadow:var(--shadow);
+    margin-bottom:18px;
+  }
+  .card.glow{box-shadow:0 0 0 1px var(--accent), var(--shadow)}
+  h1,h2,h3{line-height:1.2;margin:0 0 .4em}
+  h1{font-size:clamp(1.6rem,5vw,2.4rem)}
+  h2{font-size:clamp(1.25rem,3.5vw,1.7rem);display:flex;align-items:center;gap:10px}
+  h3{font-size:1.05rem;color:var(--accent)}
+  p{margin:0 0 .8em}
+  .muted{color:var(--muted)}
+  .small{font-size:.88rem}
+
+  /* ----- Cover ----- */
+  .cover{
+    text-align:center;
+    padding:34px 22px 26px;
+  }
+  .cover .kicker{
+    text-transform:uppercase;letter-spacing:.25em;font-size:.78rem;color:var(--accent);
+    margin-bottom:8px;
+  }
+  .cover h1{
+    background:linear-gradient(90deg,#5eead4,#a78bfa,#f0abfc);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .cover .sub{color:var(--muted);max-width:680px;margin:0 auto 18px}
+  .start-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    color:#08111c;font-weight:800;padding:14px 22px;border-radius:12px;
+    border:0;cursor:pointer;font-size:1rem;letter-spacing:.3px;
+    box-shadow:0 8px 24px rgba(94,234,212,.25);
+    transition:transform .15s ease;
+  }
+  .start-btn:hover{transform:translateY(-2px)}
+  .meta-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  .chip{background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:.78rem;color:var(--muted)}
+
+  /* ----- Map ----- */
+  .map-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;
+    margin-top:10px;
+  }
+  .map-node{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;
+    cursor:pointer;transition:all .2s ease;position:relative;overflow:hidden;
+  }
+  .map-node:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .map-node.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
+  .map-node.done{border-color:var(--ok)}
+  .map-node .lvl{font-size:.7rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+  .map-node .ttl{font-weight:700;margin-top:4px;font-size:1rem}
+  .map-node .desc{font-size:.82rem;color:var(--muted);margin-top:4px}
+  .map-node .badge{
+    position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;
+    display:grid;place-items:center;font-size:.8rem;background:var(--panel-2);
+  }
+  .map-node.done .badge{background:var(--ok);color:#06210f}
+  .map-node.locked .badge{background:var(--panel-2);color:var(--muted)}
+
+  /* ----- Level layout ----- */
+  .level{display:none;animation:fade .4s ease}
+  .level.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .quest{
+    background:var(--panel-2);border-left:4px solid var(--accent);border-radius:8px;
+    padding:14px 16px;margin:14px 0;
+  }
+  .quest .label{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .hint{color:var(--muted);font-size:.85rem;font-style:italic;margin-top:6px}
+
+  /* ----- Code block ----- */
+  pre.code{
+    background:#0c1224;border:1px solid var(--border);border-radius:10px;
+    padding:14px;overflow-x:auto;font-family:'JetBrains Mono','Fira Code',ui-monospace,Menlo,Consolas,monospace;
+    font-size:.84rem;color:#cbd5e1;line-height:1.5;
+  }
+  pre.code .k{color:#f0abfc}
+  pre.code .s{color:#86efac}
+  pre.code .c{color:#64748b;font-style:italic}
+  pre.code .f{color:#5eead4}
+  pre.code .n{color:#fbbf24}
+  code.inline{background:var(--panel-2);padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace;font-size:.85em;color:var(--accent)}
+
+  /* ----- Buttons / choices ----- */
+  .choices{display:grid;gap:8px;margin-top:10px}
+  .choice{
+    background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
+    padding:12px 14px;cursor:pointer;text-align:left;color:var(--txt);font-size:.92rem;
+    transition:all .15s ease;display:flex;gap:10px;align-items:flex-start;
+  }
+  .choice:hover{border-color:var(--accent);background:#222b53}
+  .choice .marker{flex:0 0 22px;height:22px;border-radius:6px;background:var(--panel);display:grid;place-items:center;font-weight:800;font-size:.78rem}
+  .choice.correct{border-color:var(--ok);background:rgba(134,239,172,.08)}
+  .choice.correct .marker{background:var(--ok);color:#06210f}
+  .choice.wrong{border-color:var(--err);background:rgba(253,164,175,.06)}
+  .choice.wrong .marker{background:var(--err);color:#2a0a10}
+  .choice.disabled{pointer-events:none;opacity:.7}
+
+  .btn{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--txt);
+    padding:10px 16px;border-radius:10px;cursor:pointer;font-size:.92rem;font-weight:600;
+  }
+  .btn:hover{border-color:var(--accent)}
+  .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:0;color:#08111c}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+
+  /* ----- Slider / temperature ----- */
+  .slider-wrap{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .slider-row{display:flex;align-items:center;gap:12px}
+  input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:6px;background:var(--panel-2);border-radius:999px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 8px var(--accent)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:0}
+  .temp-val{font-variant-numeric:tabular-nums;font-weight:800;color:var(--accent);min-width:42px;text-align:right}
+
+  .gen-out{
+    background:#0c1224;border:1px dashed var(--border);border-radius:10px;
+    padding:14px;min-height:80px;margin-top:10px;font-family:ui-monospace,monospace;font-size:.86rem;color:#cbd5e1;white-space:pre-wrap;word-break:break-word;
+  }
+  .gen-out .tk{display:inline;border-radius:3px;padding:0 1px}
+  .token-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
+  .token-table th,.token-table td{border:1px solid var(--border);padding:6px 8px;text-align:left}
+  .token-table th{background:var(--panel-2);color:var(--accent)}
+  .bar-cell{position:relative;height:18px;background:var(--panel-2);border-radius:4px;overflow:hidden;min-width:120px}
+  .bar-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+
+  /* ----- Attention heatmap ----- */
+  .attn-wrap{margin-top:10px;overflow-x:auto}
+  .attn-grid{display:grid;gap:2px;font-size:.7rem}
+  .attn-cell{width:30px;height:30px;display:grid;place-items:center;border-radius:3px;font-family:ui-monospace,monospace;color:#06210f}
+  .attn-label{font-size:.7rem;color:var(--muted);text-align:right;padding-right:6px;height:30px;display:flex;align-items:center;justify-content:flex-end}
+  .attn-col-label{font-size:.66rem;color:var(--muted);height:34px;display:flex;align-items:flex-end;justify-content:center;transform:rotate(-45deg);transform-origin:center;white-space:nowrap}
+
+  /* ----- Prompt evolution ----- */
+  .stage-row{display:flex;align-items:center;gap:8px;padding:8px;background:var(--panel-2);border-radius:8px;margin-bottom:6px}
+  .stage-num{flex:0 0 28px;height:28px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-weight:800;color:var(--accent)}
+  .stage-txt{flex:1;font-family:ui-monospace,monospace;font-size:.85rem}
+  .stage-correct{color:var(--ok);font-weight:700;font-size:.78rem}
+  .stage-wrong{color:var(--err);font-size:.78rem}
+
+  /* ----- Failure matcher ----- */
+  .match-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:10px}
+  @media(min-width:680px){.match-grid{grid-template-columns:1fr 1fr}}
+  .match-col h4{font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .match-item{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:grab;font-size:.86rem;transition:all .15s}
+  .match-item.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .match-item.drop{border-color:var(--accent-2)}
+  .dropzone{min-height:60px;border:1px dashed var(--border);border-radius:10px;padding:8px;background:rgba(167,139,250,.04)}
+  .match-feedback{margin-top:8px;font-size:.82rem;min-height:18px}
+
+  /* ----- Reflection quiz ----- */
+  .reflect-q{background:var(--panel-2);border-radius:10px;padding:14px;margin-bottom:10px}
+  .reflect-q .q{font-weight:700;margin-bottom:8px}
+  textarea{width:100%;background:#0c1224;border:1px solid var(--border);color:var(--txt);border-radius:8px;padding:10px;font-family:inherit;font-size:.9rem;resize:vertical;min-height:90px}
+  .reveal{background:var(--panel);border-left:4px solid var(--accent-2);border-radius:8px;padding:12px;margin-top:8px;display:none;font-size:.88rem}
+  .reveal.show{display:block}
+
+  /* ----- Toast ----- */
+  .toast{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(40px);
+    background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;
+    box-shadow:var(--shadow);z-index:50;opacity:0;transition:all .3s ease;font-size:.9rem;max-width:90vw;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.ok{border-color:var(--ok)}
+  .toast.err{border-color:var(--err)}
+
+  /* ----- Footer / nav ----- */
+  .nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .summary-list li{margin-bottom:6px}
+  .summary-list{padding-left:18px}
+  .checklist{list-style:none;padding:0;margin:0}
+  .checklist li{padding-left:24px;position:relative;margin-bottom:6px}
+  .checklist li:before{content:"☐";position:absolute;left:0;color:var(--muted)}
+  .checklist li.done:before{content:"☑";color:var(--ok)}
+  details{background:var(--panel-2);border-radius:8px;padding:10px 12px;margin-top:8px;border:1px solid var(--border)}
+  details summary{cursor:pointer;color:var(--accent);font-weight:600}
+  .badge-tier{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700}
+  .tier-gold{background:#3b2f12;color:#fbbf24}
+  .tier-silver{background:#1e293b;color:#cbd5e1}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> Missão Atenção</div>
+  <div class="progress-wrap" title="Progresso"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="xp">XP <b id="xpVal">0</b>/<span id="xpMax">100</span></div>
+  <button class="btn-reset" id="resetBtn" title="Recomeçar do zero">↺ Reiniciar</button>
+</div>
+
+<div class="container">
+
+  <!-- ===== COVER ===== -->
+  <section class="card cover" id="screen-cover">
+    <div class="kicker">Lab 4 — Understanding Attention · GPT-2</div>
+    <h1>Missão Atenção 🧠</h1>
+    <p class="sub">Um jogo interativo em <b>7 níveis</b> que te ensina, passo a passo, como resolver o notebook <code class="inline">4_lab_1-understanding-attention</code>. Você vai entender Temperatura, Geração Autoregressiva, Engenharia de Prompts, Composição, Modos de Falha, Atenção (BERT) e Reflexão Crítica.</p>
+    <button class="start-btn" id="startBtn">▶ Iniciar Missão</button>
+    <div class="meta-row">
+      <span class="chip">7 níveis</span>
+      <span class="chip">PT-BR</span>
+      <span class="chip">GPT-2 Medium · BERT</span>
+      <span class="chip">~25 min</span>
+    </div>
+  </section>
+
+  <!-- ===== MAP ===== -->
+  <section class="card" id="screen-map">
+    <h2>🗺️ Mapa da Missão</h2>
+    <p class="muted">Cada nível desbloqueia o próximo. Complete todos para receber o certificado de Analista de Atenção.</p>
+    <div class="map-grid" id="mapGrid"></div>
+  </section>
+
+  <!-- ===== LEVEL 1 ===== -->
+  <section class="card level" id="lvl-1">
+    <h2>1️⃣ Nível 1 · Setup & Baseline</h2>
+    <p>Bem-vindo ao laboratório. O objetivo aqui é carregar o GPT-2 Medium, criar a função <code class="inline">generate_text</code> e estabelecer um <b>baseline</b> com 3 prompts × 3 temperaturas. Esta base compara tudo o que vem depois.</p>
+
+    <div class="quest">
+      <div class="label">🎯 Tarefa real do notebook</div>
+      <div>Carregar <code class="inline">gpt2-medium</code> (345M parâmetros), definir a função <code class="inline">generate_text(prompt, temperature, max_length, num_samples, top_p)</code> e gerar amostras com T ∈ {0.7, 1.0, 1.5}.</div>
+    </div>
+
+    <h3>Por que <code class="inline">model.eval()</code>?</h3>
+    <p class="muted">Sem isso, o <b>Dropout</b> permanece ativo e a geração fica não-determinística mesmo com temperatura 0.</p>
+
+    <pre class="code"><span class="k">from</span> transformers <span class="k">import</span> GPT2LMHeadModel, GPT2Tokenizer
+model_name = <span class="s">"gpt2-medium"</span>  <span class="c"># 345M parâmetros</span>
+tokenizer = GPT2Tokenizer.<span class="f">from_pretrained</span>(model_name)
+model = GPT2LMHeadModel.<span class="f">from_pretrained</span>(model_name, output_attentions=<span class="k">True</span>)
+model.<span class="f">eval</span>()  <span class="c"># desliga dropout → geração determinística</span></pre>
+
+    <div class="quest">
+      <div class="label">❓ Quiz 1 — o que cada parâmetro faz?</div>
+      <p>Quando chamamos <code class="inline">model.generate(..., temperature=T, top_p=P, do_sample=True)</code>, o que <b>exatamente</b> cada controle regula?</p>
+    </div>
+
+    <div class="choices" id="q1"></div>
+    <div class="row">
+      <button class="btn-primary" id="q1next" disabled>Avançar →</button>
+    </div>
+  </section>
+
+  <!-- ===== LEVEL 2 ===== -->
+  <section class="card level" id="lvl-2">
+    <h2>2️⃣ Nível 2 · Temperatura na prática</h2>
+    <p>A temperatura <b>reshape</b> a distribuição de probabilidades antes de amostrar. Antes de ver o efeito, faça uma hipótese. Depois, ajuste o slider e veja o texto evoluir.</p>
+
+    <div class="quest">
+      <div class="label">🔬 Mini-experimento</div>
+      <div>Prompt fixo: <code class="inline">"Scientists have recently discovered that"</code>. Mova a temperatura de 0.3 a 1.5 e observe o que muda na continuação.</div>
+    </div>
+
+    <div class="slider-wrap">
+      <div class="slider-row">
+        <span class="small muted">Frio · conservador</span>
+        <input type="range" id="tempRange" min="30" max="150" value="80" step="5">
+        <span class="temp-val" id="tempVal">0.80</span>
+      </div>
+      <div class="slider-row">
+        <span class="small muted">Top-p (nucleus):</span>
+        <input type="range" id="toppRange" min="50" max="100" value="90" step="5">
+        <span class="temp-val" id="toppVal">0.90</span>
+      </div>
+      <button class="btn" id="genBtn">⚡ Gerar 1 amostra</button>
+    </div>
+
+    <div class="gen-out" id="genOut">Clique em "Gerar" para ver o GPT-2 (simulado) completar o prompt…</div>
+
+    <div class="quest">
+      <div class="label">❓ Quiz 2 — interpretação</div>
+      <p>Aumentar a temperatura de 0.7 para 1.5 produz texto "mais criativo". Qual é a explicação <b>correta</b> do porquê?</p>
+    </div>
+    <div class="choices" id="q2"></div>
+    <div class="row">
+      <button class="btn-primary" id="q2next" disabled>Avançar →</button>
+    </div>
+  </section>
+
+  <!-- ===== LEVEL 3 ===== -->
+  <section class="card level" id="lvl-3">
+    <h2>3️⃣ Nível 3 · Geração Autoregressiva</h2>
+    <p>O GPT-2 nunca "vê" o futuro — ele gera <b>um token por vez</b>, e cada token vira contexto para o próximo. É por isso que <b>erros se propagam</b>.</p>
+
+    <div class="quest">
+      <div class="label">👁️ Demonstração token-a-token</div>
+      <div>Para o prompt <code class="inline">"The cat"</code>, o modelo computa, a cada passo, a distribuição sobre o próximo token. Veja como o top-5 muda.</div>
+    </div>
+
+    <div class="row">
+      <button class="btn" id="stepBtn">▶ Próximo token</button>
+      <button class="btn" id="stepResetBtn">↺ Reiniciar</button>
+    </div>
+    <div class="gen-out" id="stepOut" style="min-height:60px"></div>
+    <table class="token-table" id="stepTable">
+      <thead><tr><th>Rank</th><th>Token</th><th>Probabilidade</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="quest">
+      <div class="label">❓ Quiz 3 — consequência da autoregressão</div>
+      <p>Se o modelo gerar um token ruim no passo 2, o que acontece com os passos 3, 4, 5…?</p>
+    </div>
+    <div class="choices" id="q3"></div>
+    <div class="row">
+      <button class="btn-primary" id="q3next" disabled>Avançar →</button>
+    </div>
+  </section>
+
+  <!-- ===== LEVEL 4 ===== -->
+  <section class="card level" id="lvl-4">
+    <h2>4️⃣ Nível 4 · Engenharia de Prompts</h2>
+    <p>O GPT-2 não tem instrução explícita — ele <b>continua</b> o texto. A forma do prompt molda radicalmente o output. Sua tarefa: arrumar os 5 estágios da <b>evolução de prompt</b> na ordem correta (do menos específico ao mais específico).</p>
+
+    <div class="quest">
+      <div class="label">🧩 Tarefa 2.1 — Evolução de Prompt</div>
+      <div>Clique nos estágios na <b>ordem correta</b> (1 → 5). Cada detalhe adicionado deve restringir semanticamente o output.</div>
+    </div>
+
+    <div id="stagePool" class="choices"></div>
+    <div class="hint" id="stageHint">Selecione o Stage 1 primeiro.</div>
+
+    <div class="quest" style="margin-top:18px">
+      <div class="label">📊 Resultado real do notebook</div>
+      <div>Coerência sobe de <b>2.8</b> (Stage 1) para <b>4.3</b> (Stage 5). Mas há <b>ponto de saturação</b>: de Stage 4→5 o ganho é decrescente.</div>
+    </div>
+
+    <div class="quest">
+      <div class="label">❓ Quiz 4 — qual estrutura de prompt funciona melhor?</div>
+      <p>Para o conceito "a story about time travel", qual das 5 estruturas produziu o melhor resultado no lab?</p>
+    </div>
+    <div class="choices" id="q4"></div>
+    <div class="row">
+      <button class="btn-primary" id="q4next" disabled>Avançar →</button>
+    </div>
+  </section>
+
+  <!-- ===== LEVEL 5 ===== -->
+  <section class="card level" id="lvl-5">
+    <h2>5️⃣ Nível 5 · Composição & Modos de Falha</h2>
+    <p>Agora a parte reveladora: <b>onde o modelo falha</b>, ele revela suas representações internas. Combine cada tipo de falha com sua explicação.</p>
+
+    <div class="quest">
+      <div class="label">🔗 Tarefa 2.4 — Match: falha ↔ revelação</div>
+      <div>Clique em uma falha à esquerda e depois na revelação correspondente à direita.</div>
+    </div>
+
+    <div class="match-grid">
+      <div class="match-col">
+        <h4>Tipo de falha</h4>
+        <div id="failList"></div>
+      </div>
+      <div class="match-col">
+        <h4>O que revela sobre o modelo</h4>
+        <div id="revealList"></div>
+      </div>
+    </div>
+    <div class="match-feedback" id="matchFeedback"></div>
+
+    <div class="quest" style="margin-top:18px">
+      <div class="label">📊 Síntese real do lab</div>
+      <div>O modelo <b>falhou em 5 de 6</b> categorias. Só passou (parcialmente) na <b>contradição</b> — porque "suaviza" via ambiguidade poética, o que é estatisticamente plausível no corpus.</div>
+    </div>
+
+    <div class="row">
+      <button class="btn-primary" id="q5next" disabled>Avançar →</button>
+    </div>
+  </section>
+
+  <!-- ===== LEVEL 6 ===== -->
+  <section class="card level" id="lvl-6">
+    <h2>6️⃣ Nível 6 · Visualizando Atenção</h2>
+    <p>O mecanismo de atenção é o coração do Transformer. O notebook usa <b>BERT</b> (não GPT-2) porque BERT é <b>bidirecional</b> — cada token atende a todos os outros, perfeito para visualizar.</p>
+
+    <div class="quest">
+      <div class="label">🔥 Heatmap de atenção</div>
+      <div>Clique em um token da frase abaixo para ver para onde cada token "olha". Células mais verdes = mais atenção.</div>
+    </div>
+
+    <div class="attn-wrap">
+      <div id="attnTokens" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+      <div id="attnGrid" class="attn-grid"></div>
+      <p class="small muted" style="margin-top:8px">Frase: <i>"The cat sat on the mat because it was comfortable."</i> · Layer 6, Head 3.</p>
+    </div>
+
+    <div class="quest">
+      <div class="label">❓ Quiz 6 — leitura do heatmap</div>
+      <p>Na frase acima, para onde o token <b>"it"</b> dirige a maior parte de sua atenção? O que isso revela?</p>
+    </div>
+    <div class="choices" id="q6"></div>
+    <div class="row">
+      <button class="btn-primary" id="q6next" disabled>Avançar →</button>
+    </div>
+  </section>
+
+  <!-- ===== LEVEL 7 — REFLECTION ===== -->
+  <section class="card level" id="lvl-7">
+    <h2>7️⃣ Nível 7 · Reflexão Crítica</h2>
+    <p>A Parte 3 do notebook pede um PDF de 1-2 páginas respondendo 4 perguntas filosóficas. Escreva suas respostas — depois revele o "modelo de resposta" do notebook resolvido.</p>
+
+    <div id="reflectContainer"></div>
+
+    <div class="row">
+      <button class="btn-primary" id="q7next" disabled>Concluir Missão →</button>
+    </div>
+  </section>
+
+  <!-- ===== END ===== -->
+  <section class="card" id="screen-end" style="display:none">
+    <h2>🏆 Missão Concluída!</h2>
+    <p>Você completou os 7 níveis e entendeu como resolver o notebook <code class="inline">4_lab_1-understanding-attention</code>.</p>
+    <div id="endTier" class="badge-tier tier-gold" style="font-size:1rem;margin-bottom:12px">Carregando…</div>
+
+    <h3>📋 Checklist de entrega do notebook</h3>
+    <ul class="checklist" id="endChecklist"></ul>
+
+    <h3 style="margin-top:18px">📚 Resumo do que você aprendeu</h3>
+    <ul class="summary-list">
+      <li><b>Parte 1:</b> carregar GPT-2 Medium, função <code class="inline">generate_text</code>, baseline com 3 temperaturas × 3-5 prompts.</li>
+      <li><b>Parte 2.1:</b> evolução de prompt — coerência sobe de 2.8→4.3 com saturação em Stage 4.</li>
+      <li><b>Parte 2.2:</b> composição — geralmente é <b>keyword matching</b>, não fusão conceitual.</li>
+      <li><b>Parte 2.3:</b> <code class="inline">example_based</code> vence por few-shot conditioning; <code class="inline">constraint_based</code> falha (sem contador interno).</li>
+      <li><b>Parte 2.4:</b> falhas em 5/6 categorias revelam que o modelo é <b>pattern matching</b>, não raciocínio simbólico.</li>
+      <li><b>Atenção:</b> BERT bidirecional, tokens especiais concentram atenção, cabeças se especializam.</li>
+      <li><b>Parte 3:</b> atenção ≠ entendimento; modelo <b>compõe</b> (não cria); significado é distribuído em pesos+espaço latente.</li>
+    </ul>
+
+    <div class="nav-row">
+      <button class="btn" id="backToMap">← Ver mapa</button>
+      <button class="btn" id="restartAll">↺ Reiniciar missão</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =================================================================
+   Lab 4 — Missão Atenção
+   Jogo interativo para ensinar a resolver o notebook de GPT-2.
+   ================================================================= */
+
+const STATE = {
+  xp:0, total:100,
+  done:{}, // levelId -> true
+  unlocked:1
+};
+
+/* ---------- Persistence ---------- */
+function save(){ try{ localStorage.setItem('lab4_mission', JSON.stringify(STATE)); }catch(e){} }
+function load(){ try{ const s=localStorage.getItem('lab4_mission'); if(s) Object.assign(STATE, JSON.parse(s)); }catch(e){} }
+load();
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function toast(msg, type=''){
+  const t=$('#toast'); t.textContent=msg; t.className='toast show '+type;
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='toast '+type, 2200);
+}
+function addXP(n){
+  STATE.xp = Math.min(STATE.total, STATE.xp+n);
+  $('#xpVal').textContent = STATE.xp;
+  $('#progressBar').style.width = (STATE.xp/STATE.total*100)+'%';
+  save();
+}
+function markDone(level, xpGain){
+  if(STATE.done[level]) return;
+  STATE.done[level]=true;
+  if(xpGain) addXP(xpGain);
+  STATE.unlocked = Math.max(STATE.unlocked, level+1);
+  renderMap(); save();
+}
+function showLevel(n){
+  $$('.level').forEach(l=>l.classList.remove('active'));
+  const el=$('#lvl-'+n); if(el) el.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- Map ---------- */
+const LEVELS = [
+  {n:1, t:'Setup & Baseline', d:'GPT-2 Medium + generate_text'},
+  {n:2, t:'Temperatura', d:'Slider ao vivo'},
+  {n:3, t:'Autoregressão', d:'Token-a-token'},
+  {n:4, t:'Engenharia de Prompts', d:'Evolução de prompt'},
+  {n:5, t:'Composição & Falhas', d:'Matcher'},
+  {n:6, t:'Atenção (BERT)', d:'Heatmap'},
+  {n:7, t:'Reflexão Crítica', d:'4 perguntas'}
+];
+function renderMap(){
+  const g=$('#mapGrid'); g.innerHTML='';
+  LEVELS.forEach(l=>{
+    const done = STATE.done[l.n];
+    const locked = l.n > STATE.unlocked;
+    const node=document.createElement('div');
+    node.className='map-node'+(done?' done':'')+(locked?' locked':'');
+    node.innerHTML=`
+      <div class="badge">${done?'✓':(locked?'🔒':l.n)}</div>
+      <div class="lvl">Nível ${l.n}</div>
+      <div class="ttl">${l.t}</div>
+      <div class="desc">${l.d}</div>`;
+    if(!locked){
+      node.onclick=()=>showLevel(l.n);
+    }
+    g.appendChild(node);
+  });
+  // Show "View certificate" button if all done
+  const allDone = LEVELS.every(l=>STATE.done[l.n]);
+  let certBtn = document.getElementById('certBtn');
+  if(allDone){
+    if(!certBtn){
+      certBtn=document.createElement('button');
+      certBtn.id='certBtn';
+      certBtn.className='btn-primary';
+      certBtn.style.cssText='margin-top:14px;width:100%';
+      certBtn.textContent='🏆 Ver Certificado de Conclusão';
+      certBtn.onclick=()=>showEnd();
+      $('#mapGrid').after(certBtn);
+    }
+  } else if(certBtn){
+    certBtn.remove();
+  }
+}
+
+/* =====================================================================
+   LEVEL 1 — Quiz sobre generate_text
+   ===================================================================== */
+const Q1 = [
+  { id:'temperature', text:'temperature regula o "quão arriscado" o sampling é — divide os logits antes da softmax. Valores <1 deixam o top-1 dominante; >1 achatam a distribuição.', correct:true },
+  { id:'top_p', text:'top_p (nucleus) mantém só o conjunto mínimo de tokens cuja prob. acumulada ≥ p, descartando o resto antes de amostrar.', correct:true },
+  { id:'max_length', text:'max_length limita o número total de tokens (prompt+gerado) — não palavras, não caracteres.', correct:true },
+  { id:'do_sample', text:'do_sample=False desativa aleatoriedade: o modelo sempre escolhe o argmax (greedy). Equivalente a T=0.', correct:false },
+  { id:'do_sample_false', text:'do_sample=False NÃO equivale a T=0. Na verdade, ele ainda usa nucleus sampling.', correct:true }
+];
+function renderQ1(){
+  const c=$('#q1'); c.innerHTML='';
+  Q1.forEach((opt,i)=>{
+    const b=document.createElement('button');
+    b.className='choice';
+    b.dataset.correct=opt.correct;
+    b.innerHTML=`<span class="marker">${'ABCDE'[i]}</span><span>${opt.text}</span>`;
+    b.onclick=()=>{
+      if(b.classList.contains('disabled')) return;
+      const isCorrect = opt.correct;
+      b.classList.add(isCorrect?'correct':'wrong');
+      if(isCorrect){ toast('✓ Correto!','ok'); }
+      else { toast('✗ Leia de novo — esta afirmação está errada.','err'); }
+      // multi-select: enable next when ALL correct ones are checked & no wrong ones clicked wrong-positive
+      checkQ1Done();
+    };
+    c.appendChild(b);
+  });
+}
+function checkQ1Done(){
+  const choices = $$('#q1 .choice');
+  const allCorrect = Q1.every((o,i)=> o.correct ? choices[i].classList.contains('correct') : true);
+  const anyWrong = Q1.some((o,i)=> !o.correct && choices[i].classList.contains('wrong'));
+  if(allCorrect && !anyWrong){
+    $('#q1next').disabled=false;
+    toast('🏆 Todas corretas! Pode avançar.','ok');
+  }
+}
+function bindQ1(){
+  $('#q1next').onclick=()=>{
+    markDone(1, 14);
+    showLevel(2);
+    initLevel2();
+  };
+}
+
+/* =====================================================================
+   LEVEL 2 — Temperature slider
+   ===================================================================== */
+// Simulação de saídas (curadas, parecidas com as do lab)
+const GEN_BANK = {
+  0.3: "Scientists have recently discovered that the universe is composed of many tiny particles. These particles, called atoms, are the building blocks of matter.",
+  0.5: "Scientists have recently discovered that a new type of bacteria can survive in extreme environments. This finding could help us understand life on other planets.",
+  0.8: "Scientists have recently discovered that the human brain contains a previously unknown type of cell. These cells appear to fire during sleep, suggesting they may play a role in memory consolidation.",
+  1.0: "Scientists have recently discovered that gravity behaves differently in regions of spacetime where dark matter is dense. The anomaly was first noticed near the galactic core, where time itself seemed to stutter.",
+  1.2: "Scientists have recently discovered that octopi dream in colors humans cannot name. The colors reportedly exist in a dimension between sleep and memory, where mathematics becomes melodic and turtles briefly forget.",
+  1.5: "Scientists have recently discovered that bread, when left unattended near magnets, develops brief political opinions. The bread, they insist, is mostly wrong about everything except the future of Tuesdays."
+};
+function nearestTemp(t){
+  const keys=Object.keys(GEN_BANK).map(Number);
+  let best=keys[0], dist=Math.abs(t-best);
+  for(const k of keys){ const d=Math.abs(k-t); if(d<dist){dist=d;best=k;} }
+  return best;
+}
+function initLevel2(){
+  const r=$('#tempRange'), v=$('#tempVal');
+  const r2=$('#toppRange'), v2=$('#toppVal');
+  v.textContent=(r.value/100).toFixed(2);
+  v2.textContent=(r2.value/100).toFixed(2);
+  r.oninput=()=>{ v.textContent=(r.value/100).toFixed(2); };
+  r2.oninput=()=>{ v2.textContent=(r2.value/100).toFixed(2); };
+  $('#genBtn').onclick=()=>{
+    const t=parseInt(r.value)/100;
+    const key=nearestTemp(t);
+    const txt=GEN_BANK[key];
+    const out=$('#genOut');
+    out.textContent='';
+    let i=0;
+    const id=setInterval(()=>{
+      out.textContent=txt.slice(0,i);
+      i+=2;
+      if(i>=txt.length){ clearInterval(id); out.textContent=txt; }
+    }, 12);
+  };
+  renderQ2();
+}
+const Q2=[
+  {text:'O modelo fica literalmente "mais inteligente" em alta temperatura e gera ideias que não conhecia.', correct:false},
+  {text:'Temperatura alta aumenta a entropia amostral: o modelo amostra de regiões menos densas da distribuição treinada. Não é criatividade genuína — é mais ruído.', correct:true},
+  {text:'Temperatura alta muda os pesos da rede neural, ativando novos neurônios "criativos".', correct:false},
+  {text:'Temperatura simplesmente reescala os logits antes da softmax, mas o espaço de probabilidades subjacente é o mesmo — só mudou de onde se amostra.', correct:true}
+];
+function renderQ2(){
+  const c=$('#q2'); c.innerHTML='';
+  Q2.forEach((o,i)=>{
+    const b=document.createElement('button'); b.className='choice';
+    b.innerHTML=`<span class="marker">${'ABCD'[i]}</span><span>${o.text}</span>`;
+    b.onclick=()=>{
+      if(b.classList.contains('disabled')) return;
+      if(o.correct){
+        b.classList.add('correct'); b.classList.add('disabled');
+        if(Q2.filter((x,j)=>j!==i && x.correct).every((x,j)=>{
+          const cb=$$('#q2 .choice')[j]; return cb && cb.classList.contains('correct');
+        })){
+          $('#q2next').disabled=false; toast('🏆 Correto!','ok');
+        } else {
+          toast('✓ Certo — mas há outra resposta correta também.','ok');
+        }
+      } else {
+        b.classList.add('wrong'); b.classList.add('disabled');
+        toast('✗ Não — releia a opção.','err');
+      }
+    };
+    c.appendChild(b);
+  });
+}
+function bindQ2(){
+  $('#q2next').onclick=()=>{ markDone(2,14); showLevel(3); initLevel3(); };
+}
+
+/* =====================================================================
+   LEVEL 3 — Token-by-token autoregressive generation (simulated)
+   ===================================================================== */
+const STEP_SEQ = [
+  {tok:'The', next:'cat'},
+  {tok:'cat', next:'sat'},
+  {tok:'sat', next:'on'},
+  {tok:'on', next:'the'},
+  {tok:'the', next:'mat'},
+  {tok:'mat', next:'because'},
+  {tok:'because', next:'it'},
+  {tok:'it', next:'was'},
+  {tok:'was', next:'comfortable'},
+  {tok:'comfortable', next:'.'}
+];
+const STEP_DIST = {
+  'cat':[['sat',0.62],['ate',0.15],['slept',0.10],['jumped',0.07],['ran',0.06]],
+  'sat':[['on',0.55],['down',0.20],['there',0.10],['quietly',0.08],['up',0.07]],
+  'on':[['the',0.71],['a',0.12],['top',0.08],['its',0.05],['my',0.04]],
+  'the':[['mat',0.34],['floor',0.25],['bed',0.15],['couch',0.12],['ground',0.14]],
+  'mat':[['because',0.28],['while',0.22],['and',0.20],['.',0.18],['today',0.12]],
+  'because':[['it',0.41],['the',0.22],['she',0.15],['he',0.12],['there',0.10]],
+  'it':[['was',0.58],['felt',0.18],['is',0.10],['seemed',0.08],['looked',0.06]],
+  'was':[['comfortable',0.40],['soft',0.22],['warm',0.18],['there',0.10],['happy',0.10]],
+  'comfortable':[['.',0.60],[',',0.20],['and',0.12],['too',0.08]]
+};
+let stepIdx=0;
+function initLevel3(){
+  stepIdx=0;
+  $('#stepOut').textContent='The cat';
+  $('#stepBtn').onclick=()=>{
+    if(stepIdx>=STEP_SEQ.length-1){ toast('Fim da frase.',''); return; }
+    const cur=STEP_SEQ[stepIdx];
+    const next=STEP_SEQ[stepIdx+1];
+    $('#stepOut').textContent += ' ' + next.tok;
+    // render dist
+    const dist = STEP_DIST[next.tok] || [];
+    const tb=$('#stepTable tbody'); tb.innerHTML='';
+    dist.forEach(([tok,p],i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i+1}</td><td>${tok}</td><td><div class="bar-cell"><div class="bar-fill" style="width:${p*100}%"></div></div> <span style="margin-left:6px">${(p*100).toFixed(0)}%</span></td>`;
+      tb.appendChild(tr);
+    });
+    stepIdx++;
+  };
+  $('#stepResetBtn').onclick=()=>{
+    stepIdx=0;
+    $('#stepOut').textContent='The cat';
+    $('#stepTable tbody').innerHTML='';
+  };
+  renderQ3();
+}
+const Q3=[
+  {text:'Os passos seguintes são condicionados ao token errado — o erro se propaga e o output degrada cumulativamente.', correct:true},
+  {text:'Nada — o modelo ignora tokens anteriores a cada passo e sempre "começa do zero".', correct:false},
+  {text:'O modelo automaticamente corrige no passo seguinte, porque tem um módulo de auto-revisão.', correct:false},
+  {text:'Erros se propagam porque cada novo token é amostrado condicionado a TODOS os tokens anteriores (inclusive o errado).', correct:true}
+];
+function renderQ3(){
+  const c=$('#q3'); c.innerHTML='';
+  Q3.forEach((o,i)=>{
+    const b=document.createElement('button'); b.className='choice';
+    b.innerHTML=`<span class="marker">${'ABCD'[i]}</span><span>${o.text}</span>`;
+    b.onclick=()=>{
+      if(b.classList.contains('disabled')) return;
+      if(o.correct){
+        b.classList.add('correct','disabled');
+        if(Q3.filter((x,j)=>j!==i&&x.correct).every((x,j)=>{
+          const cb=$$('#q3 .choice')[j]; return cb&&cb.classList.contains('correct');
+        })){ $('#q3next').disabled=false; toast('🏆 Correto!','ok'); }
+        else toast('✓ Certo — há outra correta.','ok');
+      } else { b.classList.add('wrong','disabled'); toast('✗ Errado.','err'); }
+    };
+    c.appendChild(b);
+  });
+}
+function bindQ3(){ $('#q3next').onclick=()=>{ markDone(3,14); showLevel(4); initLevel4(); }; }
+
+/* =====================================================================
+   LEVEL 4 — Prompt evolution ordering + best structure quiz
+   ===================================================================== */
+const STAGES = [
+  {txt:'A cat', n:1},
+  {txt:'A fluffy cat', n:2},
+  {txt:'A fluffy Persian cat', n:3},
+  {txt:'A fluffy Persian cat sitting by the window', n:4},
+  {txt:'A fluffy Persian cat sitting by the window at dusk', n:5}
+];
+let stageOrder=[];
+function initLevel4(){
+  stageOrder=[];
+  // shuffle
+  const pool=[...STAGES].sort(()=>Math.random()-0.5);
+  const c=$('#stagePool'); c.innerHTML='';
+  pool.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='choice';
+    b.dataset.n=s.n;
+    b.innerHTML=`<span class="marker"></span><span class="stage-txt">${s.txt}</span><span class="stage-status"></span>`;
+    b.onclick=()=>{
+      if(b.classList.contains('disabled')) return;
+      const expected = stageOrder.length+1;
+      if(s.n===expected){
+        b.classList.add('correct','disabled');
+        b.querySelector('.marker').textContent = s.n;
+        stageOrder.push(s.n);
+        $('#stageHint').textContent = stageOrder.length<5 ? `Stage ${stageOrder.length+1} a seguir…` : '✓ Todos os 5 estágios na ordem correta!';
+        if(stageOrder.length===5){
+          toast('🏆 Evolução completa! Coerência sobe 2.8→4.3.','ok');
+        }
+      } else {
+        b.classList.add('wrong');
+        setTimeout(()=>b.classList.remove('wrong'), 600);
+        toast('✗ Esse não é o próximo estágio.','err');
+      }
+    };
+    c.appendChild(b);
+  });
+  $('#stageHint').textContent='Selecione o Stage 1 primeiro.';
+  renderQ4();
+}
+const Q4=[
+  {id:'direct', text:'direct: "Write a story about time travel."', correct:false},
+  {id:'role', text:'role_based: "You are a novelist. Write …"', correct:false},
+  {id:'example', text:'example_based: "Here\'s an example story: … Now write …"', correct:true},
+  {id:'constraint', text:'constraint_based: "Write … in exactly 5 sentences, with a twist."', correct:false},
+  {id:'socratic', text:'socratic: "What would be the most compelling opening?"', correct:false}
+];
+function renderQ4(){
+  const c=$('#q4'); c.innerHTML='';
+  Q4.forEach((o,i)=>{
+    const b=document.createElement('button'); b.className='choice';
+    b.innerHTML=`<span class="marker">${'ABCDE'[i]}</span><span>${o.text}</span>`;
+    b.onclick=()=>{
+      if(b.classList.contains('disabled')) return;
+      if(o.correct){
+        b.classList.add('correct','disabled');
+        $('#q4next').disabled=false;
+        toast('🏆 example_based venceu (qualidade 4.0, coerência 4.2).','ok');
+      } else {
+        b.classList.add('wrong','disabled');
+        toast('✗ Não foi essa a vencedora no lab.','err');
+      }
+    };
+    c.appendChild(b);
+  });
+}
+function bindQ4(){ $('#q4next').onclick=()=>{ markDone(4,14); showLevel(5); initLevel5(); }; }
+
+/* =====================================================================
+   LEVEL 5 — Failure matcher
+   ===================================================================== */
+const FAILS = [
+  {id:'counting', label:'Counting — "Liste exatamente 7 coisas"'},
+  {id:'spatial', label:'Spatial Reasoning — A à esquerda de B, dentro de C'},
+  {id:'negation', label:'Negation — "nada acontece"'},
+  {id:'math', label:'Math Operation — 17 menos um primo <10'},
+  {id:'temporal', label:'Temporal Ordering — A→B→C'},
+  {id:'contradiction', label:'Contradiction — "fale feliz sobre tristeza"'}
+];
+const REVEALS = [
+  {id:'counting', text:'Contagem precisa requer estado discreto — transformers autoregressivos não têm contador interno.'},
+  {id:'spatial', text:'Raciocínio relacional-espacial exige representações simbólicas, não estatísticas.'},
+  {id:'negation', text:'Negação profunda conflita com padrões narrativos dominantes no corpus.'},
+  {id:'math', text:'Aritmética é execução simbólica — não casamento de padrão textual.'},
+  {id:'temporal', text:'Ordenação temporal requer estado lógico mantido além da janela de atenção.'},
+  {id:'contradiction', text:'NÃO falhou — suavizou via ambiguidade poética (interpolação semântica).'}
+];
+let selectedFail=null;
+let matched={};
+function initLevel5(){
+  selectedFail=null; matched={};
+  const fl=$('#failList'); fl.innerHTML='';
+  const shuffledFails=[...FAILS].sort(()=>Math.random()-0.5);
+  shuffledFails.forEach(f=>{
+    const d=document.createElement('div');
+    d.className='match-item'; d.dataset.id=f.id; d.textContent=f.label;
+    d.onclick=()=>{
+      if(matched[f.id]) return;
+      $$('#failList .match-item').forEach(x=>x.classList.remove('sel'));
+      d.classList.add('sel'); selectedFail=f.id;
+      $('#matchFeedback').textContent=`Selecionado: ${f.label.split('—')[0].trim()}. Agora clique na revelação correspondente.`;
+    };
+    fl.appendChild(d);
+  });
+  const rl=$('#revealList'); rl.innerHTML='';
+  const shuffledReveals=[...REVEALS].sort(()=>Math.random()-0.5);
+  shuffledReveals.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='match-item'; d.dataset.id=r.id; d.textContent=r.text;
+    d.onclick=()=>{
+      if(!selectedFail){ toast('Selecione uma falha primeiro.','err'); return; }
+      if(matched[selectedFail]) return;
+      const revItem=d;
+      if(r.id===selectedFail){
+        revItem.classList.add('correct');
+        revItem.style.borderColor='var(--ok)';
+        revItem.style.background='rgba(134,239,172,.1)';
+        const fItem = $$('#failList .match-item').find(x=>x.dataset.id===selectedFail);
+        if(fItem){ fItem.classList.add('correct'); fItem.style.borderColor='var(--ok)'; fItem.style.background='rgba(134,239,172,.1)'; }
+        matched[selectedFail]=true;
+        selectedFail=null;
+        $('#matchFeedback').textContent = `✓ Match correto! (${Object.keys(matched).length}/${FAILS.length})`;
+        if(Object.keys(matched).length===FAILS.length){
+          $('#q5next').disabled=false;
+          toast('🏆 Todas as 6 correspondências corretas!','ok');
+        }
+      } else {
+        revItem.classList.add('wrong');
+        setTimeout(()=>revItem.classList.remove('wrong'), 700);
+        $('#matchFeedback').textContent = '✗ Essa revelação não corresponde a essa falha. Tente outra.';
+      }
+    };
+    rl.appendChild(d);
+  });
+  $('#matchFeedback').textContent='';
+}
+function bindQ5(){ $('#q5next').onclick=()=>{ markDone(5,14); showLevel(6); initLevel6(); }; }
+
+/* =====================================================================
+   LEVEL 6 — Attention heatmap
+   ===================================================================== */
+const ATTN_SENTENCE = ['The','cat','sat','on','the','mat','because','it','was','comfortable','.'];
+// Matriz de atenção simulada (Layer 6, Head 3) — [query][key]
+// "it" (idx 7) dirige atenção principal para "cat" (idx 1)
+const ATTN_MATRIX = [
+  [0.10,0.05,0.03,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.68], // The -> [CLS]
+  [0.30,0.10,0.20,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05], // cat -> The
+  [0.02,0.55,0.05,0.10,0.05,0.05,0.05,0.05,0.05,0.03,0.00], // sat -> cat
+  [0.02,0.05,0.40,0.05,0.20,0.10,0.05,0.05,0.05,0.03,0.00], // on -> sat
+  [0.05,0.05,0.05,0.40,0.05,0.20,0.10,0.05,0.05,0.00,0.00], // the -> on
+  [0.02,0.10,0.05,0.05,0.50,0.05,0.15,0.05,0.03,0.00,0.00], // mat -> the
+  [0.02,0.05,0.05,0.05,0.05,0.30,0.05,0.20,0.15,0.08,0.05], // because -> mat
+  [0.05,0.45,0.10,0.05,0.05,0.10,0.05,0.05,0.05,0.05,0.00], // it -> cat ★
+  [0.02,0.05,0.05,0.05,0.05,0.05,0.10,0.50,0.05,0.08,0.00], // was -> it
+  [0.05,0.10,0.05,0.05,0.05,0.10,0.05,0.20,0.25,0.05,0.05], // comfortable -> it,was
+  [0.10,0.10,0.10,0.10,0.10,0.10,0.05,0.05,0.05,0.20,0.05]  // . -> comfortable
+];
+let attnRow=0;
+function colorFor(v){
+  // v in [0,1] -> from dark blue to bright green
+  const r = Math.round(20 + v*120);
+  const g = Math.round(40 + v*200);
+  const b = Math.round(80 - v*40);
+  return `rgb(${r},${g},${b})`;
+}
+function initLevel6(){
+  attnRow=7; // default highlight: "it"
+  renderAttn();
+  // Token buttons
+  const tk=$('#attnTokens'); tk.innerHTML='';
+  ATTN_SENTENCE.forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.className='btn'; b.style.cssText='padding:4px 10px;font-size:.8rem';
+    b.textContent=t;
+    b.onclick=()=>{ attnRow=i; renderAttn(); };
+    tk.appendChild(b);
+  });
+  renderQ6();
+}
+function renderAttn(){
+  const g=$('#attnGrid'); g.innerHTML='';
+  const n=ATTN_SENTENCE.length;
+  // grid: n+1 columns (label + cells), n+1 rows (header + rows)
+  g.style.gridTemplateColumns = `100px repeat(${n}, 30px)`;
+  // header row
+  const empty=document.createElement('div');
+  g.appendChild(empty);
+  ATTN_SENTENCE.forEach(t=>{
+    const lbl=document.createElement('div');
+    lbl.className='attn-col-label'; lbl.textContent=t;
+    g.appendChild(lbl);
+  });
+  // rows
+  for(let i=0;i<n;i++){
+    const lbl=document.createElement('div');
+    lbl.className='attn-label'; lbl.textContent = (i===attnRow?'▶ ':'')+ATTN_SENTENCE[i];
+    if(i===attnRow){ lbl.style.color='var(--accent)'; lbl.style.fontWeight='700'; }
+    g.appendChild(lbl);
+    for(let j=0;j<n;j++){
+      const cell=document.createElement('div');
+      cell.className='attn-cell';
+      const v=ATTN_MATRIX[i][j];
+      cell.style.background = colorFor(v);
+      cell.textContent = v>=0.30 ? Math.round(v*100) : '';
+      cell.style.color = v>=0.45 ? '#06210f' : '#e6e9f5';
+      if(j===attnRow){ cell.style.outline='1px solid var(--accent)'; }
+      g.appendChild(cell);
+    }
+  }
+}
+const Q6=[
+  {text:'"it" olha principalmente para "cat" — o modelo resolveu a co-referência (it = cat), capturada pela atenção.', correct:true},
+  {text:'"it" olha principalmente para "." — porque a pontuação finaliza a frase.', correct:false},
+  {text:'"it" olha uniformemente para todos os tokens — atenção distribui igualmente.', correct:false},
+  {text:'"it" olha para "mat" porque, no corpus, gatos frequentemente estão sobre tapetes.', correct:false}
+];
+function renderQ6(){
+  const c=$('#q6'); c.innerHTML='';
+  Q6.forEach((o,i)=>{
+    const b=document.createElement('button'); b.className='choice';
+    b.innerHTML=`<span class="marker">${'ABCD'[i]}</span><span>${o.text}</span>`;
+    b.onclick=()=>{
+      if(b.classList.contains('disabled')) return;
+      if(o.correct){
+        b.classList.add('correct','disabled');
+        $('#q6next').disabled=false;
+        toast('🏆 Atenção resolveu a co-referência "it" → "cat"!','ok');
+      } else {
+        b.classList.add('wrong','disabled');
+        toast('✗ Veja a coluna destacada.','err');
+      }
+    };
+    c.appendChild(b);
+  });
+}
+function bindQ6(){ $('#q6next').onclick=()=>{ markDone(6,14); showLevel(7); initLevel7(); }; }
+
+/* =====================================================================
+   LEVEL 7 — Reflection
+   ===================================================================== */
+const REFLECT = [
+  {
+    q:'1. Atenção constitui "entendimento"? Defenda com evidências dos experimentos.',
+    hint:'O notebook resolvido diz NÃO. Atenção pondera relevância contextual entre tokens. Falhou em 5/6 categorias que exigiam raciocínio simbólico (contagem, aritmética, espacial, temporal, negação).'
+  },
+  {
+    q:'2. O modelo "cria" ou "compõe"? Qual a distinção?',
+    hint:'Compõe — recombinar padrões existentes. Criar = originar de primeiros princípios. O caso "cavaleiro medieval + coding interview" funcionou porque textos de humor nesse cruzamento existem no corpus.'
+  },
+  {
+    q:'3. Onde mora o "significado" num Transformer? Nos pesos? Na atenção? No espaço latente?',
+    hint:'Distribuído: pesos codificam significado potencial (padrões do corpus); atenção organiza significado situacional (relações contextuais); embeddings codificam geometria semântica (significado relacional).'
+  },
+  {
+    q:'4. Importa se o modelo "entende", se ele performa bem? Por quê?',
+    hint:'Para muitas aplicações práticas, não. Mas importa em: (1) confiança/calibração — produz texto errado com igual fluência; (2) generalização fora-da-distribuição; (3) responsabilidade ética. A resposta honesta: não sabemos.'
+  }
+];
+function initLevel7(){
+  const c=$('#reflectContainer'); c.innerHTML='';
+  REFLECT.forEach((r,i)=>{
+    const div=document.createElement('div'); div.className='reflect-q';
+    div.innerHTML=`<div class="q">${r.q}</div>
+      <textarea placeholder="Escreva sua resposta (mín. 2 frases)…" data-idx="${i}"></textarea>
+      <div class="row"><button class="btn" data-reveal="${i}">📖 Revelar resposta-modelo</button></div>
+      <div class="reveal" data-revealbox="${i}">${r.hint}</div>`;
+    c.appendChild(div);
+  });
+  // bind reveal + done detection
+  $$('#reflectContainer [data-reveal]').forEach(btn=>{
+    btn.onclick=()=>{
+      const i=btn.dataset.reveal;
+      $(`[data-revealbox="${i}"]`).classList.toggle('show');
+    };
+  });
+  $$('#reflectContainer textarea').forEach(t=>{
+    t.oninput=()=>{
+      const allFilled = $$('#reflectContainer textarea').every(x=>x.value.trim().length>=20);
+      $('#q7next').disabled = !allFilled;
+    };
+  });
+}
+function bindQ7(){
+  $('#q7next').onclick=()=>{
+    markDone(7,16);
+    showEnd();
+  };
+}
+
+/* =====================================================================
+   END SCREEN
+   ===================================================================== */
+function showEnd(){
+  $$('.level').forEach(l=>l.classList.remove('active'));
+  $('#screen-map').style.display='none';
+  $('#screen-cover').style.display='none';
+  $('#screen-end').style.display='block';
+  const xp=STATE.xp;
+  const tier = xp>=90?'tier-gold':'tier-silver';
+  const label = xp>=90?'👑 Analista de Atenção — Ouro':xp>=70?'🥈 Analista de Atenção — Prata':'📊 Concluído';
+  const tEl=$('#endTier'); tEl.className='badge-tier '+tier; tEl.textContent=label;
+  // checklist
+  const cl=$('#endChecklist'); cl.innerHTML='';
+  const items=[
+    'Notebook .ipynb com todo o código das Partes 1-2',
+    '5 prompts × 3 temperaturas no baseline (3 amostras cada)',
+    'Tabela de evolução de prompt (5 estágios)',
+    'Tabela de prompts composicionais (4 prompts, com scores)',
+    'Comparação de 5 estruturas de prompt',
+    'Suite de falhas (6 tipos) com análise do que revela',
+    'Heatmaps de atenção do BERT (≥4 sentenças)',
+    'PDF separado: "Critical Reflection on Attention & Generation" (1-2 págs)',
+    'Notebook entregue SEM células de output (para economizar espaço)'
+  ];
+  items.forEach(t=>{
+    const li=document.createElement('li'); li.className='done'; li.textContent=t;
+    cl.appendChild(li);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+function bindGlobal(){
+  $('#startBtn').onclick=()=>{
+    $('#screen-cover').style.display='none';
+    $('#screen-map').style.display='block';
+    renderMap();
+    showLevel(1);
+  };
+  $('#resetBtn').onclick=()=>{
+    if(!confirm('Reiniciar todo o progresso?')) return;
+    localStorage.removeItem('lab4_mission');
+    location.reload();
+  };
+  $('#backToMap').onclick=()=>{
+    $('#screen-end').style.display='none';
+    $('#screen-map').style.display='block';
+    renderMap();
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  $('#restartAll').onclick=()=>{
+    localStorage.removeItem('lab4_mission'); location.reload();
+  };
+}
+bindQ1(); bindQ2(); bindQ3(); bindQ4(); bindQ5(); bindQ6(); bindQ7();
+renderQ1();
+bindGlobal();
+renderMap();
+$('#xpVal').textContent=STATE.xp;
+$('#progressBar').style.width=(STATE.xp/STATE.total*100)+'%';
+
+// If returning user with progress, show map directly
+if(Object.keys(STATE.done).length>0){
+  $('#screen-cover').style.display='none';
+  $('#screen-map').style.display='block';
+}
+</script>
+</body>
+</html>
